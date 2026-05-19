@@ -1,11 +1,23 @@
 import re
 from dataclasses import dataclass, fields, is_dataclass
-from .syntax import Syntax
+
+class syntax:
+    braces   = r"\{([^{}]+)\}"
+    dollars  = r"\$\{([^{}]+)\}"
+    angles   = r"<([^<>]+)>"
+    percents = r"%([^%]+)%"
+
+# decorator shortcuts
+datamap.braces = datamap(syntax=syntax.braces)
+datamap.angles = datamap(syntax=syntax.angles)
+datamap.dollars = datamap(syntax=syntax.dollars)
+datamap.percents = datamap(syntax=syntax.percents)
+
 
 @dataclass
 class DataMap:
     '''Core datamap class. Contains logic used to make datamaps'''
-    __syntax__: str = Syntax.braces
+    __syntax__: str = syntax.braces
     __mode__ = None
 
     def as_map(self):
@@ -35,13 +47,13 @@ class DataMap:
 
     @classmethod
     def get_syntax(cls):
-        return getattr(cls, "__syntax__", Syntax.braces)
+        return getattr(cls, "__syntax__", syntax.braces)
 
 # decorator
 def datamap(
     _cls = None,
     *,
-    syntax: str = Syntax.braces,
+    syntax: str = syntax.braces,
     mode: bool | None = None,
 ):
     '''@datamap decorator with optional values'''
@@ -56,9 +68,3 @@ def datamap(
         return dataclass(frozen=False)(cls)
 
     return wrap if _cls is None else wrap(_cls)
-
-# decorator shortcuts
-datamap.braces = datamap(syntax=Syntax.braces)
-datamap.angles = datamap(syntax=Syntax.angles)
-datamap.dollars = datamap(syntax=Syntax.dollars)
-datamap.percents = datamap(syntax=Syntax.percents)
