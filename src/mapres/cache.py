@@ -1,5 +1,5 @@
 class LRUCache:
-    def __init__(self, max_size=1024):
+    def __init__(self, max_size: int = 1024):
         self.max_size = max_size
         self.data = {}
 

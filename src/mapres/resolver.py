@@ -2,9 +2,30 @@ import re
 from .datamap import DataMap, syntax
 from .cache import LRUCache
 from .layers import Layer, LayerStack
+from .exceptions import MapResError, MissingKeyError, MapSyntaxError
+
 
 class MapResolver:
-    def __init__(self, layers=None, syntax=None, pipeline=None, cache=False, cache_size=1024, max_depth=5):
+    """
+    Core resolution engine for mapres.
+
+    Handles:
+    - pipeline stages
+    - syntax providers
+    - layered maps
+    - context substitution
+    - recursive multi-pass resolution
+    - optional caching
+    """
+    def __init__(
+        self,
+        layers: list | None = None,
+        syntax: list | None = None,
+        pipeline: list | None = None,
+        cache: bool = False,
+        cache_size: int = 1024,
+        max_depth: int = 5
+    ):
         self.layers = layers or LayerStack()
         self.syntax = syntax or []
         self.pipeline = pipeline or []
@@ -13,25 +34,37 @@ class MapResolver:
         self.max_depth = max_depth
 
     # pipeline
-    def _apply_pipeline(self, text, ctx):
-        for stage in self.pipeline:
-            text = stage(text, ctx, self)
-        return text
+    def _apply_pipeline(self, text: str, ctx: dict) -> str:
+        try:
+            for stage in self.pipeline:
+                text = stage(text, ctx, self)
+            return text
+        except Exception as exc:
+            raise MapResError(f"Pipeline stage failed: {exc}") from exc
 
     # syntax providers
-    def _apply_syntax(self, text, ctx):
+    def _apply_syntax(self, text: str, ctx: dict) -> str:
         for provider in self.syntax:
             pattern = provider.pattern
             d = provider.get_map(ctx, self)
-            def repl(match):
+            def repl(match: re.Match) -> str:
                 k = match.group(1)
-                return str(d.get(k, match.group(0)))
-            text = re.sub(pattern, repl, text)
+                if k not in d:
+                    raise MissingKeyError(f"Missing key '{k}' in syntax provider {provider}")
+                return str(d[k])
+            try:
+                text = re.sub(pattern, repl, text)
+            except re.error as exc:
+                raise MapSyntaxError(
+                    f"Regex error in syntax provider {provider}: {exc}"
+                ) from exc
         return text
 
     # layered maps
-    def _apply_maps(self, text, ctx, layerstack):
+    def _apply_maps(self, text: str, ctx: dict, layerstack: LayerStack) -> str:
         for m in layerstack:
+
+            # class-based layer
             if isinstance(m, type) and hasattr(m, "as_map"):
                 m = m()
             if hasattr(m, "as_map"):
@@ -44,25 +77,36 @@ class MapResolver:
                 d = m
             else:
                 continue
-            def repl(match):
+
+            def repl(match: re.Match) -> str:
                 k = match.group(1)
-                return str(d.get(k, match.group(0)))
-            text = re.sub(pattern, repl, text)
+                if k not in d:
+                    raise MissingKeyError(f"Missing key '{k}' in layer {m}")
+                return str(d[k])
+            try:
+                text = re.sub(pattern, repl, text)
+            except re.error as exc:
+                raise MapSyntaxError(f"Regex error in layer {m}: {exc}") from exc
         return text
 
-    # ctx
-    def _apply_ctx(self, text, ctx):
+    # context
+    def _apply_ctx(self, text: str, ctx: dict) -> str:
         if not ctx:
             return text
         pattern = syntax.braces
         d = ctx
-        def repl(match):
+        def repl(match: re.Match) -> str:
             k = match.group(1)
-            return str(d.get(k, match.group(0)))
-        return re.sub(pattern, repl, text)
+            if k not in d:
+                raise MissingKeyError(f"Missing ctx key '{k}'")
+            return str(d[k])
+        try:
+            return re.sub(pattern, repl, text)
+        except re.error as exc:
+            raise MapSyntaxError(f"Regex error in ctx syntax: {exc}") from exc
 
     # one pass
-    def _resolve_once(self, text, ctx, layerstack):
+    def _resolve_once(self, text: str, ctx: dict, layerstack: LayerStack) -> str:
         text = self._apply_pipeline(text, ctx)
         text = self._apply_syntax(text, ctx)
         text = self._apply_maps(text, ctx, layerstack)
@@ -70,7 +114,7 @@ class MapResolver:
         return text
 
     # recursion
-    def _recursive(self, text, ctx, layerstack):
+    def _recursive(self, text: str, ctx: dict, layerstack: LayerStack) -> str:
         current = text
         for _ in range(self.max_depth):
             result = self._resolve_once(current, ctx, layerstack)
@@ -80,31 +124,51 @@ class MapResolver:
         return current
 
     # public api
-    def res(self, text, *, extra_maps=None, override_maps=None, **ctx):
-        if override_maps is not None:
-            temp = LayerStack([Layer("override", override_maps, priority=0)])
-            return self._recursive(text, ctx, temp)
+    def res(
+        self,
+        text: str,
+        *,
+        extra_maps: dict | None = None,
+        override_maps: dict | None = None,
+        **ctx
+    ) -> str:
+        """
+        Resolve a string using maps, syntax providers, pipeline, and context.
+        """
+        try:
+            if override_maps is not None:
+                temp = LayerStack([Layer("override", override_maps, priority=0)])
+                return self._recursive(text, ctx, temp)
 
-        if extra_maps:
-            temp = self.layers.clone()
-            temp.add_layer(Layer("extra", extra_maps, priority=999))
-            return self._recursive(text, ctx, temp)
+            if extra_maps:
+                temp = self.layers.clone()
+                temp.add_layer(Layer("extra", extra_maps, priority=999))
+                return self._recursive(text, ctx, temp)
 
-        if self.cache_enabled:
-            key = (text, tuple(sorted(ctx.items())))
-            cached = self.cache.get(key)
-            if cached is not None:
-                return cached
+            if self.cache_enabled:
+                key = (text, tuple(sorted(ctx.items())))
+                cached = self.cache.get(key)
+                if cached is not None:
+                    return cached
 
-        result = self._recursive(text, ctx, self.layers)
+            result = self._recursive(text, ctx, self.layers)
 
-        if self.cache_enabled:
-            self.cache.set(key, result)
+            if self.cache_enabled:
+                self.cache.set(key, result)
 
-        return result
+            return result
+
+        except MapResError:
+            raise
+        except Exception as exc:
+            raise MapResError(f"Unhandled resolver error: {exc}") from exc
+
 
 # global resolver
 _DEFAULT = MapResolver()
 
-def res(text, **ctx):
+def res(text: str, **ctx) -> str:
+    """
+    Resolve using the global default resolver.
+    """
     return _DEFAULT.res(text, **ctx)

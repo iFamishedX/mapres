@@ -1,4 +1,7 @@
 run: true
-version: "1.1.2"
+version: "2.0"
 description: |
-  - Moved decorator shortcuts
+  - Added MapSyntaxError exception
+  - Removed unused utils file
+  - Added docstrings and typehints
+  - Cleaned up files

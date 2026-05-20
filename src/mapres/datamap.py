@@ -12,31 +12,21 @@ class syntax:
 class DataMap:
     '''Core datamap class. Contains logic used to make datamaps'''
     __syntax__: str = syntax.braces
-    __mode__ = None
+    __mode__: str | None = None
 
     def as_map(self):
         result = {}
-
         for f in fields(self):
             if not f.init or f.name in ("__syntax__", "__mode__"):
                 continue
-
             val = getattr(self, f.name)
-
-            # dynamic mode
             if self.__mode__ == "dynamic":
                 providers = getattr(self, "providers", None)
-
-                # explicit provider dict only
                 if isinstance(providers, dict) and f.name in providers:
                     val = providers[f.name]
-
-                # callables are executed
                 if callable(val):
                     val = val()
-
             result[f.name] = val
-
         return result
 
     @classmethod
@@ -54,13 +44,10 @@ def datamap(
     def wrap(cls):
         cls.__syntax__ = syntax
         cls.__mode__ = mode
-
         namespace = dict(cls.__dict__)
         namespace["__dict__"] = {}
-
         cls = type(cls.__name__, (DataMap,), namespace)
         return dataclass(frozen=False)(cls)
-
     return wrap if _cls is None else wrap(_cls)
 
 

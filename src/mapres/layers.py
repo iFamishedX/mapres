@@ -1,5 +1,5 @@
-# layer holds maps with a priority
 class Layer:
+    '''Holds a map with a priority'''
     def __init__(self, name, maps=None, priority=0):
         self.name = name
         self.maps = maps or []
@@ -11,8 +11,9 @@ class Layer:
     def __iter__(self):
         return iter(self.maps)
 
-# layerstack manages ordered layers
+
 class LayerStack:
+    '''Manages ordered layers'''
     def __init__(self, layers=None):
         self.layers = {}
         if layers:

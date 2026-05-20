@@ -4,5 +4,5 @@ class MapResError(Exception):
 class MissingKeyError(MapResError):
     pass
 
-class SyntaxError(MapResError):
+class MapSyntaxError(MapResError):
     pass
