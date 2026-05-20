@@ -61,32 +61,38 @@ class MapResolver:
         return text
 
     # layered maps
-    def _apply_maps(self, text: str, ctx: dict, layerstack: LayerStack) -> str:
+    def _apply_maps(self, text: str, ctx: dict, layerstack: LayerStack):
+        syntax_patterns = []
         for m in layerstack:
-
-            # class-based layer
             if isinstance(m, type) and hasattr(m, "as_map"):
                 m = m()
             if hasattr(m, "as_map"):
-                pattern = m.get_syntax()
-                d = m.as_map()
+                syntax_patterns.append(m.get_syntax())
             elif isinstance(m, dict):
                 pattern = ctx.get("syntax")
-                if not pattern:
-                    continue
-                d = m
-            else:
-                continue
-
-            def repl(match: re.Match) -> str:
+                if pattern:
+                    syntax_patterns.append(pattern)
+        syntax_patterns = list(dict.fromkeys(syntax_patterns))
+        for pattern in syntax_patterns:
+            def repl(match: re.Match):
                 k = match.group(1)
-                if k not in d:
-                    raise MissingKeyError(f"Missing key '{k}' in layer {m}")
-                return str(d[k])
+                for m in layerstack:
+                    layer = m
+                    if isinstance(layer, type) and hasattr(layer, "as_map"):
+                        layer = layer()
+                    if hasattr(layer, "as_map"):
+                        d = layer.as_map()
+                    elif isinstance(layer, dict):
+                        d = layer
+                    else:
+                        continue
+                    if k in d:
+                        return str(d[k])
+                raise MissingKeyError(f"Missing key '{k}' in any layer")
             try:
                 text = re.sub(pattern, repl, text)
             except re.error as exc:
-                raise MapSyntaxError(f"Regex error in layer {m}: {exc}") from exc
+                raise MapSyntaxError(f"Regex error in syntax pattern {pattern}: {exc}") from exc
         return text
 
     # context

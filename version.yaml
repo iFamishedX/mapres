@@ -1,5 +1,4 @@
 run: true
-version: "2.1"
+version: "2.2"
 description: |
-  - Added math map
-  - Renamed time_tk to time
+  - Update _map_resolver to support silent failover
