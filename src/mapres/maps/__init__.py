@@ -12,8 +12,4 @@ __all__ = [
     # time
     'TimeMap',
     'time',
-
-    # math
-    'MathMap',
-    'math'
 ]

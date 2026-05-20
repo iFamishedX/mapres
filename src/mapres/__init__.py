@@ -14,7 +14,6 @@ from .layers import Layer, LayerStack
 # maps
 from .maps.color import ColorMap, ascii_colors, mc_colors, strip_colors
 from .maps.time import TimeMap, time
-from .maps.math import MathMap, math
 
 # namespaces
 maps = SimpleNamespace(
@@ -27,10 +26,6 @@ maps = SimpleNamespace(
     # time
     TimeMap = TimeMap,
     time = time,
-
-    # math
-    MathMap = MathMap,
-    math = math,
 )
 
 __all__ = [
@@ -50,8 +45,6 @@ __all__ = [
     'strip_colors',
     'TimeMap',
     'time',
-    'MathMap',
-    'math',
 
     # namespaces
     'maps',

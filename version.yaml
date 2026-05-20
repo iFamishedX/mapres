@@ -1,4 +1,4 @@
 run: true
-version: "2.2"
+version: "2.2.1"
 description: |
-  - Update _map_resolver to support silent failover
+  - Removed math map
