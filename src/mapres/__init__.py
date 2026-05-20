@@ -13,19 +13,28 @@ from .layers import Layer, LayerStack
 
 # maps
 from .maps.color import ColorMap, ascii_colors, mc_colors, strip_colors
-from .maps.time import TimeMap, time_tk
+from .maps.time import TimeMap, time
+from .maps.math import MathMap, math
 
 # namespaces
 maps = SimpleNamespace(
+    # color
     ColorMap = ColorMap,
     ascii_colors = ascii_colors,
     mc_colors = mc_colors,
     strip_colors = strip_colors,
+
+    # time
     TimeMap = TimeMap,
-    time_tk = time_tk,
+    time = time,
+
+    # math
+    MathMap = MathMap,
+    math = math,
 )
 
 __all__ = [
+    # core modules
     'MapResolver',
     'res',
     'DataMap',
@@ -40,7 +49,9 @@ __all__ = [
     'mc_colors',
     'strip_colors',
     'TimeMap',
-    'time_tk',
+    'time',
+    'MathMap',
+    'math',
 
     # namespaces
     'maps',

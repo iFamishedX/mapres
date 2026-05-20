@@ -61,5 +61,6 @@ class TimeMap:
             'weekday': lambda: now().strftime('%A'),
         }
 
+
 # proxy map
-time_tk = TimeMap
+time = TimeMap
