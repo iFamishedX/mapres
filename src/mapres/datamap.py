@@ -7,12 +7,6 @@ class syntax:
     angles   = r"<([^<>]+)>"
     percents = r"%([^%]+)%"
 
-# decorator shortcuts
-datamap.braces = datamap(syntax=syntax.braces)
-datamap.angles = datamap(syntax=syntax.angles)
-datamap.dollars = datamap(syntax=syntax.dollars)
-datamap.percents = datamap(syntax=syntax.percents)
-
 
 @dataclass
 class DataMap:
@@ -68,3 +62,10 @@ def datamap(
         return dataclass(frozen=False)(cls)
 
     return wrap if _cls is None else wrap(_cls)
+
+
+# decorator shortcuts
+datamap.braces = datamap(syntax=syntax.braces)
+datamap.angles = datamap(syntax=syntax.angles)
+datamap.dollars = datamap(syntax=syntax.dollars)
+datamap.percents = datamap(syntax=syntax.percents)
