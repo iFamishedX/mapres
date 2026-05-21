@@ -1,4 +1,4 @@
 run: true
-version: "2.2.1"
+version: "2.2.2"
 description: |
-  - Removed math map
+  - Fixed _apply_maps

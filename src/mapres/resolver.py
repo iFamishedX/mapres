@@ -88,7 +88,12 @@ class MapResolver:
                         continue
                     if k in d:
                         return str(d[k])
-                raise MissingKeyError(f"Missing key '{k}' in any layer")
+
+                if k in ctx:
+                    return str(ctx[k])
+
+                raise MissingKeyError(f"Missing key '{k}' in any layer or context")
+
             try:
                 text = re.sub(pattern, repl, text)
             except re.error as exc:
