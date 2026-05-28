@@ -33,6 +33,7 @@ class DataMap:
     def get_syntax(cls):
         return getattr(cls, "__syntax__", syntax.braces)
 
+
 # decorator
 def datamap(
     _cls = None,
@@ -46,7 +47,12 @@ def datamap(
         cls.__mode__ = mode
         namespace = dict(cls.__dict__)
         namespace["__dict__"] = {}
+        # preserve any rules class defined in the original namespace by attaching it to the generated class
+        rules_obj = namespace.get("rules", None)
         cls = type(cls.__name__, (DataMap,), namespace)
+        # attach rules (if present) to the new class so validators can read them via the datamap class
+        if rules_obj is not None:
+            setattr(cls, "rules", rules_obj)
         return dataclass(frozen=False)(cls)
     return wrap if _cls is None else wrap(_cls)
 
