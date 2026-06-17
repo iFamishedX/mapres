@@ -6,7 +6,7 @@ from .exceptions import MapResError, MissingKeyError, MapSyntaxError
 
 
 class MapResolver:
-    """
+    '''
     Core resolution engine for mapres.
 
     Handles:
@@ -16,7 +16,7 @@ class MapResolver:
     - context substitution
     - recursive multi-pass resolution
     - optional caching
-    """
+    '''
     def __init__(
         self,
         layers: list | None = None,
@@ -40,7 +40,7 @@ class MapResolver:
                 text = stage(text, ctx, self)
             return text
         except Exception as exc:
-            raise MapResError(f"Pipeline stage failed: {exc}") from exc
+            raise MapResError(f'Pipeline stage failed: {exc}') from exc
 
     # syntax providers
     def _apply_syntax(self, text: str, ctx: dict) -> str:
@@ -50,13 +50,13 @@ class MapResolver:
             def repl(match: re.Match) -> str:
                 k = match.group(1)
                 if k not in d:
-                    raise MissingKeyError(f"Missing key '{k}' in syntax provider {provider}")
+                    raise MissingKeyError(f'Missing key "{k}" in syntax provider {provider}')
                 return str(d[k])
             try:
                 text = re.sub(pattern, repl, text)
             except re.error as exc:
                 raise MapSyntaxError(
-                    f"Regex error in syntax provider {provider}: {exc}"
+                    f'Regex error in syntax provider {provider}: {exc}'
                 ) from exc
         return text
 
@@ -64,12 +64,12 @@ class MapResolver:
     def _apply_maps(self, text: str, ctx: dict, layerstack: LayerStack):
         syntax_patterns = []
         for m in layerstack:
-            if isinstance(m, type) and hasattr(m, "as_map"):
+            if isinstance(m, type) and hasattr(m, 'as_map'):
                 m = m()
-            if hasattr(m, "as_map"):
+            if hasattr(m, 'as_map'):
                 syntax_patterns.append(m.get_syntax())
             elif isinstance(m, dict):
-                pattern = ctx.get("syntax")
+                pattern = ctx.get('syntax')
                 if pattern:
                     syntax_patterns.append(pattern)
         syntax_patterns = list(dict.fromkeys(syntax_patterns))
@@ -78,9 +78,9 @@ class MapResolver:
                 k = match.group(1)
                 for m in layerstack:
                     layer = m
-                    if isinstance(layer, type) and hasattr(layer, "as_map"):
+                    if isinstance(layer, type) and hasattr(layer, 'as_map'):
                         layer = layer()
-                    if hasattr(layer, "as_map"):
+                    if hasattr(layer, 'as_map'):
                         d = layer.as_map()
                     elif isinstance(layer, dict):
                         d = layer
@@ -92,12 +92,12 @@ class MapResolver:
                 if k in ctx:
                     return str(ctx[k])
 
-                raise MissingKeyError(f"Missing key '{k}' in any layer or context")
+                raise MissingKeyError(f'Missing key "{k}" in any layer or context')
 
             try:
                 text = re.sub(pattern, repl, text)
             except re.error as exc:
-                raise MapSyntaxError(f"Regex error in syntax pattern {pattern}: {exc}") from exc
+                raise MapSyntaxError(f'Regex error in syntax pattern {pattern}: {exc}') from exc
         return text
 
     # context
@@ -109,12 +109,12 @@ class MapResolver:
         def repl(match: re.Match) -> str:
             k = match.group(1)
             if k not in d:
-                raise MissingKeyError(f"Missing ctx key '{k}'")
+                raise MissingKeyError(f'Missing ctx key "{k}"')
             return str(d[k])
         try:
             return re.sub(pattern, repl, text)
         except re.error as exc:
-            raise MapSyntaxError(f"Regex error in ctx syntax: {exc}") from exc
+            raise MapSyntaxError(f'Regex error in ctx syntax: {exc}') from exc
 
     # one pass
     def _resolve_once(self, text: str, ctx: dict, layerstack: LayerStack) -> str:
@@ -143,17 +143,17 @@ class MapResolver:
         override_maps: dict | None = None,
         **ctx
     ) -> str:
-        """
+        '''
         Resolve a string using maps, syntax providers, pipeline, and context.
-        """
+        '''
         try:
             if override_maps is not None:
-                temp = LayerStack([Layer("override", override_maps, priority=0)])
+                temp = LayerStack([Layer('override', override_maps, priority=0)])
                 return self._recursive(text, ctx, temp)
 
             if extra_maps:
                 temp = self.layers.clone()
-                temp.add_layer(Layer("extra", extra_maps, priority=999))
+                temp.add_layer(Layer('extra', extra_maps, priority=999))
                 return self._recursive(text, ctx, temp)
 
             if self.cache_enabled:
@@ -172,14 +172,14 @@ class MapResolver:
         except MapResError:
             raise
         except Exception as exc:
-            raise MapResError(f"Unhandled resolver error: {exc}") from exc
+            raise MapResError(f'Unhandled resolver error: {exc}') from exc
 
 
 # global resolver
 _DEFAULT = MapResolver()
 
 def res(text: str, **ctx) -> str:
-    """
+    '''
     Resolve using the global default resolver.
-    """
+    '''
     return _DEFAULT.res(text, **ctx)

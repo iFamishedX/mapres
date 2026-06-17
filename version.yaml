@@ -1,4 +1,4 @@
 run: true
-version: "2.3"
+version: '2.3.1'
 description: |
-  - Added rules support to datamaps
+  - Used single quotes where possible
