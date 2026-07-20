@@ -6,7 +6,7 @@ from mapres.datamap import datamap, syntax
 @datamap(syntax=syntax.percents, mode='dynamic')
 class TimeMap:
     # default timezone
-    _default_tz = ZoneInfo('UTC')
+    _default_tz = ZoneInfo('America/Chicago')
 
     # dynamic fields
     hh: str = None
