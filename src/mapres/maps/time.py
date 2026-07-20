@@ -1,18 +1,19 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from mapres.datamap import datamap, syntax
 
 
+def safe_zoneinfo(tz: str):
+    try:
+        return ZoneInfo(tz)
+    except Exception:
+        return timezone.utc
+
+
 @datamap(syntax=syntax.percents, mode='dynamic')
 class TimeMap:
-    # default timezone
-    try:
-        _default_tz = ZoneInfo("America/Chicago")
-    except Exception:
-        from datetime import timezone
-        _default_tz = timezone.utc
+    _default_tz = safe_zoneinfo("America/Chicago")
 
-    # dynamic fields
     hh: str = None
     h: str = None
     h12: str = None
@@ -29,7 +30,7 @@ class TimeMap:
     weekday: str = None
 
     def __init__(self, tz: str | None = None):
-        self.TZ = ZoneInfo(tz) if tz else self._default_tz
+        self.TZ = safe_zoneinfo(tz) if tz else self._default_tz
 
     @property
     def providers(self):
