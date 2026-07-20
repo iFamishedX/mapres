@@ -14,20 +14,20 @@ def safe_zoneinfo(tz: str):
 class TimeMap:
     _default_tz = safe_zoneinfo("America/Chicago")
 
-    hh: str = None
-    h: str = None
-    h12: str = None
-    hh12: str = None
-    ampm: str = None
-    mm: str = None
-    m: str = None
-    ss: str = None
-    s: str = None
-    ms: str = None
-    YYYY: str = None
-    MM: str = None
-    DD: str = None
-    weekday: str = None
+    hh: str | None = None
+    h: str | None = None
+    h12: str | None = None
+    hh12: str | None = None
+    ampm: str | None = None
+    mm: str | None = None
+    m: str | None = None
+    ss: str | None = None
+    s: str | None = None
+    ms: str | None = None
+    YYYY: str | None = None
+    MM: str | None = None
+    DD: str | None = None
+    weekday: str | None = None
 
     def __init__(self, tz: str | None = None):
         self.TZ = safe_zoneinfo(tz) if tz else self._default_tz

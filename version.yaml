@@ -1,4 +1,4 @@
 run: true
-version: '2.4-dev.3'
+version: '2.4-dev.4'
 description: |
-  - Test
+  - Fix some typing issues

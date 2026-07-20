@@ -39,7 +39,7 @@ def datamap(
     _cls = None,
     *,
     syntax: str = syntax.braces,
-    mode: bool | None = None,
+    mode: bool | str | None = None,
 ):
     '''@datamap decorator with optional values'''
     def wrap(cls):
