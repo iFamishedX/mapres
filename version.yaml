@@ -1,5 +1,5 @@
 run: true
-version: '2.4-alpha.1'
+version: '2.4-alpha.2'
 description: |
   - Dev 1-4:
     - Fix some typing issues
@@ -12,3 +12,5 @@ description: |
   - Alpha 1:
     - Now in Alpha branch
     - Improved simple usability
+  - Alpha 2:
+    - Fixed wrong _DEFAULT_PASSES call

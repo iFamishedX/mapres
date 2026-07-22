@@ -219,7 +219,7 @@ def setDefaultPasses(passes: int):
         raise MapResError("Passes cannot be less than 1")
     _DEFAULT_RESOLVER.passes_default = passes
 
-def res(text: str, passes=_DEFAULT_PASSES, **ctx) -> str:
+def res(text: str, passes=None, **ctx) -> str:
     '''
     Simple resolution using the global default resolver.
     '''
