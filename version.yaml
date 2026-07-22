@@ -1,4 +1,8 @@
 run: true
-version: '2.4-dev.4'
+version: '2.4-dev.5'
 description: |
-  - Fix some typing issues
+  - Dev 1-4:
+    - Fix some typing issues
+  - Dev 5:
+    - Changed versioning
+    - Added setGlobalMaps

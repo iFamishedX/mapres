@@ -183,3 +183,19 @@ def res(text: str, **ctx) -> str:
     Resolve using the global default resolver.
     '''
     return _DEFAULT.res(text, **ctx)
+
+def setGlobalMaps(maps, *, name=None, priority=0):
+    """
+    Register a global map or datamap class into the default resolver.
+
+    maps: datamap class OR dict
+    name: optional layer name (default = class name or 'global')
+    priority: layer priority (lower = earlier)
+    """
+    layer_name = name or getattr(maps, "__name__", "global")
+
+    # Wrap datamap class or dict in a Layer
+    layer = Layer(layer_name, maps=[maps], priority=priority)
+
+    # Add to global resolver
+    _DEFAULT.layers.add_layer(layer)
