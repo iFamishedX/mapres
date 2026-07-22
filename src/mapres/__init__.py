@@ -7,7 +7,7 @@ try:
 except PackageNotFoundError:
     __version__ = '0.0.0'
 
-from .resolver import MapResolver, res, setGlobalMaps
+from .resolver import MapResolver, res, setGlobalMaps, setDefaultPasses
 from .datamap import DataMap, datamap, syntax
 from .layers import Layer, LayerStack
 
@@ -38,6 +38,7 @@ __all__ = [
     'Layer',
     'LayerStack',
     'setGlobalMaps',
+    'setDefaultPasses',
 
     # maps
     'ColorMap',
