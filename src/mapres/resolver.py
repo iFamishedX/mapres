@@ -14,7 +14,7 @@ class MapResolver:
     - syntax providers
     - layered maps
     - context substitution
-    - recursive multi-pass resolution
+    - multi-pass resolution (controlled by `passes`)
     - optional caching
     '''
     def __init__(
@@ -24,14 +24,16 @@ class MapResolver:
         pipeline: list | None = None,
         cache: bool = False,
         cache_size: int = 1024,
-        max_depth: int = 5
+        passes_default: int = 5
     ):
         self.layers = layers or LayerStack()
         self.syntax = syntax or []
         self.pipeline = pipeline or []
         self.cache_enabled = cache
         self.cache = LRUCache(cache_size) if cache else None
-        self.max_depth = max_depth
+
+        # unified recursion control
+        self.passes_default = passes_default
 
     # pipeline
     def _apply_pipeline(self, text: str, ctx: dict) -> str:
@@ -47,22 +49,26 @@ class MapResolver:
         for provider in self.syntax:
             pattern = provider.pattern
             d = provider.get_map(ctx, self)
+
             def repl(match: re.Match) -> str:
                 k = match.group(1)
                 if k not in d:
                     raise MissingKeyError(f'Missing key "{k}" in syntax provider {provider}')
                 return str(d[k])
+
             try:
                 text = re.sub(pattern, repl, text)
             except re.error as exc:
                 raise MapSyntaxError(
                     f'Regex error in syntax provider {provider}: {exc}'
                 ) from exc
+
         return text
 
     # layered maps
     def _apply_maps(self, text: str, ctx: dict, layerstack: LayerStack):
         syntax_patterns = []
+
         for m in layerstack:
             if isinstance(m, type) and hasattr(m, 'as_map'):
                 m = m()
@@ -72,10 +78,13 @@ class MapResolver:
                 pattern = ctx.get('syntax')
                 if pattern:
                     syntax_patterns.append(pattern)
+
         syntax_patterns = list(dict.fromkeys(syntax_patterns))
+
         for pattern in syntax_patterns:
             def repl(match: re.Match):
                 k = match.group(1)
+
                 for m in layerstack:
                     layer = m
                     if isinstance(layer, type) and hasattr(layer, 'as_map'):
@@ -86,6 +95,7 @@ class MapResolver:
                         d = layer
                     else:
                         continue
+
                     if k in d:
                         return str(d[k])
 
@@ -98,19 +108,23 @@ class MapResolver:
                 text = re.sub(pattern, repl, text)
             except re.error as exc:
                 raise MapSyntaxError(f'Regex error in syntax pattern {pattern}: {exc}') from exc
+
         return text
 
     # context
     def _apply_ctx(self, text: str, ctx: dict) -> str:
         if not ctx:
             return text
+
         pattern = syntax.braces
         d = ctx
+
         def repl(match: re.Match) -> str:
             k = match.group(1)
             if k not in d:
                 raise MissingKeyError(f'Missing ctx key "{k}"')
             return str(d[k])
+
         try:
             return re.sub(pattern, repl, text)
         except re.error as exc:
@@ -124,21 +138,12 @@ class MapResolver:
         text = self._apply_ctx(text, ctx)
         return text
 
-    # recursion
-    def _recursive(self, text: str, ctx: dict, layerstack: LayerStack) -> str:
-        current = text
-        for _ in range(self.max_depth):
-            result = self._resolve_once(current, ctx, layerstack)
-            if result == current:
-                return result
-            current = result
-        return current
-
     # public api
     def res(
         self,
         text: str,
         *,
+        passes: int | None = None,
         extra_maps: dict | None = None,
         override_maps: dict | None = None,
         **ctx
@@ -147,22 +152,39 @@ class MapResolver:
         Resolve a string using maps, syntax providers, pipeline, and context.
         '''
         try:
+            # determine number of passes
+            depth = passes if passes is not None else self.passes_default
+
+            if depth <= 0:
+                raise MapResError("passes must be >= 1")
+
+            # override maps
             if override_maps is not None:
                 temp = LayerStack([Layer('override', override_maps, priority=0)])
-                return self._recursive(text, ctx, temp)
+                return self._resolve_once(text, ctx, temp)
 
+            # extra maps
             if extra_maps:
                 temp = self.layers.clone()
                 temp.add_layer(Layer('extra', extra_maps, priority=999))
-                return self._recursive(text, ctx, temp)
+                return self._resolve_once(text, ctx, temp)
 
+            # caching
             if self.cache_enabled:
                 key = (text, tuple(sorted(ctx.items())))
                 cached = self.cache.get(key)
                 if cached is not None:
                     return cached
 
-            result = self._recursive(text, ctx, self.layers)
+            # multi-pass resolution
+            current = text
+            for _ in range(depth):
+                new = self._resolve_once(current, ctx, self.layers)
+                if new == current:
+                    break
+                current = new
+
+            result = current
 
             if self.cache_enabled:
                 self.cache.set(key, result)
@@ -178,11 +200,11 @@ class MapResolver:
 # global resolver
 _DEFAULT = MapResolver()
 
-def res(text: str, **ctx) -> str:
+def res(text: str, passes=None, **ctx) -> str:
     '''
     Resolve using the global default resolver.
     '''
-    return _DEFAULT.res(text, **ctx)
+    return _DEFAULT.res(text, passes=passes, **ctx)
 
 def setGlobalMaps(maps, *, name=None, priority=0):
     """
@@ -193,9 +215,5 @@ def setGlobalMaps(maps, *, name=None, priority=0):
     priority: layer priority (lower = earlier)
     """
     layer_name = name or getattr(maps, "__name__", "global")
-
-    # Wrap datamap class or dict in a Layer
     layer = Layer(layer_name, maps=[maps], priority=priority)
-
-    # Add to global resolver
     _DEFAULT.layers.add_layer(layer)
