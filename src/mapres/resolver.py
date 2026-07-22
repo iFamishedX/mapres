@@ -197,14 +197,10 @@ class MapResolver:
             raise MapResError(f'Unhandled resolver error: {exc}') from exc
 
 
-# global resolver
-_DEFAULT = MapResolver()
-
-def res(text: str, passes=None, **ctx) -> str:
-    '''
-    Resolve using the global default resolver.
-    '''
-    return _DEFAULT.res(text, passes=passes, **ctx)
+# ----------------------------------
+# ---------- SIMPLE USAGE ----------
+# ----------------------------------
+_DEFAULT_RESOLVER = MapResolver()        # global resolver
 
 def setGlobalMaps(maps, *, name=None, priority=0):
     """
@@ -216,4 +212,15 @@ def setGlobalMaps(maps, *, name=None, priority=0):
     """
     layer_name = name or getattr(maps, "__name__", "global")
     layer = Layer(layer_name, maps=[maps], priority=priority)
-    _DEFAULT.layers.add_layer(layer)
+    _DEFAULT_RESOLVER.layers.add_layer(layer)
+
+def setDefaultPasses(passes: int):
+    if passes < 1:
+        raise MapResError("Passes cannot be less than 1")
+    _DEFAULT_RESOLVER.passes_default = passes
+
+def res(text: str, passes=_DEFAULT_PASSES, **ctx) -> str:
+    '''
+    Simple resolution using the global default resolver.
+    '''
+    return _DEFAULT_RESOLVER.res(text, passes=passes, **ctx)
