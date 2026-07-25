@@ -1,5 +1,5 @@
 run: true
-version: '2.4-alpha.3'
+version: '2.4-alpha.4'
 description: |
   - Dev 1-4:
     - Fix some typing issues
@@ -17,3 +17,5 @@ description: |
     - Fixed wrong _DEFAULT_PASSES call
   - Alpha 3:
     - Added setDefaultPasses() import
+  - Alpha 4:
+    - Added new syntaxes for datamaps
