@@ -10,6 +10,7 @@ class syntax:
     hash_tags     = r'#([^#]+)#'            # #value#
     pipe_tags     = r'\|([^|]+)\|'          # |value|
     paren_dollar  = r'\$\(([^)]+)\)'        # $(value)
+    colons        = r':([^:\n]+):'          # :value:
 
 @dataclass
 class DataMap:
@@ -67,3 +68,4 @@ datamap.at_tags       = datamap(syntax=syntax.at_tags)
 datamap.hash_tags     = datamap(syntax=syntax.hash_tags)
 datamap.pipe_tags     = datamap(syntax=syntax.pipe_tags)
 datamap.paren_dollar  = datamap(syntax=syntax.paren_dollar)
+datamap.colons        = datamap(syntax=syntax.colons)

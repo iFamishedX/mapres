@@ -1,5 +1,5 @@
 run: true
-version: '2.4-alpha.4'
+version: '2.4-alpha.5'
 description: |
   - Dev 1-4:
     - Fix some typing issues
@@ -20,3 +20,5 @@ description: |
   - Alpha 4:
     - Added new syntaxes for datamaps
     - Removed braces syntax
+  - Alpha 5:
+    - Added colons syntax
