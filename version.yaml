@@ -1,5 +1,5 @@
 run: true
-version: '2.4-alpha.6'
+version: '2.4-alpha.7'
 description: |
   - Dev 1-4:
     - Fix some typing issues
@@ -24,3 +24,5 @@ description: |
     - Added colons syntax
   - Alpha 6:
     - Testing new string literal transformation
+  - Alpha 7:
+    - Revert changes
