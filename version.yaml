@@ -19,3 +19,4 @@ description: |
     - Added setDefaultPasses() import
   - Alpha 4:
     - Added new syntaxes for datamaps
+    - Removed braces syntax
