@@ -52,12 +52,8 @@ def datamap(_cls=None, *, syntax=syntax.double_braces, mode=None):
         if rules_obj is not None:
             setattr(cls, 'rules', rules_obj)
         return dataclass(frozen=False)(cls)
-
-    # direct decorator: @datamap(...)
     if _cls is not None:
         return wrap(_cls)
-
-    # factory: @datamap(...)
     return wrap
 
 
@@ -66,13 +62,17 @@ class _SyntaxFactory:
     def __init__(self, syntax_value):
         self._syntax = syntax_value
 
-    def __call__(self, **kwargs):
-        # allows: @datamap.double_braces(mode='config')
+    def __call__(self, _cls=None, **kwargs):
+        # Case 1: bare decorator: @datamap.colons
+        if _cls is not None and isinstance(_cls, type):
+            return datamap(_cls, syntax=self._syntax)
+
+        # Case 2: decorator with args: @datamap.colons(mode='config')
         return datamap(syntax=self._syntax, **kwargs)
 
     @property
     def config(self):
-        # allows: @datamap.double_braces.config
+        # Case 3: @datamap.colons.config
         return datamap(syntax=self._syntax, mode='config')
 
 
