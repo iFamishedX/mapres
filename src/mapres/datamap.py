@@ -12,6 +12,7 @@ class syntax:
     paren_dollar  = r'\$\(([^)]+)\)'        # $(value)
     colons        = r':([^:\n]+):'          # :value:
 
+
 @dataclass
 class DataMap:
     '''Core datamap class. Contains logic used to make datamaps'''
@@ -38,13 +39,8 @@ class DataMap:
         return getattr(cls, '__syntax__', syntax.double_braces)
 
 
-# decorator
-def datamap(
-    _cls = None,
-    *,
-    syntax: str = syntax.double_braces,
-    mode: bool | str | None = None,
-):
+# main decorator factory
+def datamap(_cls=None, *, syntax=syntax.double_braces, mode=None):
     '''@datamap decorator with optional values'''
     def wrap(cls):
         cls.__syntax__ = syntax
@@ -56,16 +52,40 @@ def datamap(
         if rules_obj is not None:
             setattr(cls, 'rules', rules_obj)
         return dataclass(frozen=False)(cls)
-    return wrap if _cls is None else wrap(_cls)
+
+    # direct decorator: @datamap(...)
+    if _cls is not None:
+        return wrap(_cls)
+
+    # factory: @datamap(...)
+    return wrap
 
 
-# decorator shortcuts
-datamap.double_braces = datamap(syntax=syntax.double_braces)
-datamap.angles        = datamap(syntax=syntax.angles)
-datamap.dollars       = datamap(syntax=syntax.dollars)
-datamap.percents      = datamap(syntax=syntax.percents)
-datamap.at_tags       = datamap(syntax=syntax.at_tags)
-datamap.hash_tags     = datamap(syntax=syntax.hash_tags)
-datamap.pipe_tags     = datamap(syntax=syntax.pipe_tags)
-datamap.paren_dollar  = datamap(syntax=syntax.paren_dollar)
-datamap.colons        = datamap(syntax=syntax.colons)
+# syntax-bound decorator factories
+class _SyntaxFactory:
+    def __init__(self, syntax_value):
+        self._syntax = syntax_value
+
+    def __call__(self, **kwargs):
+        # allows: @datamap.double_braces(mode='config')
+        return datamap(syntax=self._syntax, **kwargs)
+
+    @property
+    def config(self):
+        # allows: @datamap.double_braces.config
+        return datamap(syntax=self._syntax, mode='config')
+
+
+# build syntax shortcuts
+datamap.double_braces = _SyntaxFactory(syntax.double_braces)
+datamap.angles        = _SyntaxFactory(syntax.angles)
+datamap.dollars       = _SyntaxFactory(syntax.dollars)
+datamap.percents      = _SyntaxFactory(syntax.percents)
+datamap.at_tags       = _SyntaxFactory(syntax.at_tags)
+datamap.hash_tags     = _SyntaxFactory(syntax.hash_tags)
+datamap.pipe_tags     = _SyntaxFactory(syntax.pipe_tags)
+datamap.paren_dollar  = _SyntaxFactory(syntax.paren_dollar)
+datamap.colons        = _SyntaxFactory(syntax.colons)
+
+# global mode shortcut
+datamap.config = datamap(mode='config')

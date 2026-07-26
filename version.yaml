@@ -1,5 +1,5 @@
 run: true
-version: '2.4-alpha.8'
+version: '2.4-alpha.9'
 description: |
   - Dev 1-4:
     - Fix some typing issues
@@ -28,3 +28,5 @@ description: |
     - Revert changes
   - Alpha 8:
     - Fixed Unhandled resolver error
+  - Alpha 9:
+    - Datamap overhaul
