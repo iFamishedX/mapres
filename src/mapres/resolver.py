@@ -116,7 +116,7 @@ class MapResolver:
         if not ctx:
             return text
 
-        pattern = syntax.braces
+        pattern = syntax.double_braces
         d = ctx
 
         def repl(match: re.Match) -> str:

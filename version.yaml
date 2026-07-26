@@ -1,5 +1,5 @@
 run: true
-version: '2.4-alpha.7'
+version: '2.4-alpha.8'
 description: |
   - Dev 1-4:
     - Fix some typing issues
@@ -26,3 +26,5 @@ description: |
     - Testing new string literal transformation
   - Alpha 7:
     - Revert changes
+  - Alpha 8:
+    - Fixed Unhandled resolver error
