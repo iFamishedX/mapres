@@ -5,6 +5,38 @@ from .layers import Layer, LayerStack
 from .exceptions import MapResError, MissingKeyError, MapSyntaxError
 
 
+# escape pipeline
+ESCAPES = {
+    r'\:': '__ESC_COLON__',
+    r'\<': '__ESC_LT__',
+    r'\%': '__ESC_PERCENT__',
+    r'\$': '__ESC_DOLLAR__',
+    r'\{': '__ESC_LBRACE__',
+    r'\|': '__ESC_PIPE__',
+}
+
+# Reverse mapping: placeholder -> literal char (without backslash)
+UNESCAPES = {
+    placeholder: esc[1:]   # remove leading backslash
+    for esc, placeholder in ESCAPES.items()
+}
+
+
+def escape_stage(text: str, ctx: dict, resolver) -> str:
+    """Replace escaped opening delimiters with placeholders."""
+    for esc, placeholder in ESCAPES.items():
+        text = text.replace(esc, placeholder)
+    return text
+
+
+def unescape_stage(text: str, ctx: dict, resolver) -> str:
+    """Restore escaped delimiters after resolution."""
+    for placeholder, literal in UNESCAPES.items():
+        text = text.replace(placeholder, literal)
+    return text
+
+
+# core resolver
 class MapResolver:
     '''
     Core resolution engine for mapres.
@@ -34,6 +66,12 @@ class MapResolver:
 
         # unified recursion control
         self.passes_default = passes_default
+
+        # Insert escape stage FIRST
+        self.pipeline.insert(0, escape_stage)
+
+        # Append unescape stage LAST
+        self.pipeline.append(unescape_stage)
 
     # pipeline
     def _apply_pipeline(self, text: str, ctx: dict) -> str:
@@ -152,7 +190,6 @@ class MapResolver:
         Resolve a string using maps, syntax providers, pipeline, and context.
         '''
         try:
-            # determine number of passes
             depth = passes if passes is not None else self.passes_default
 
             if depth <= 0:
@@ -200,16 +237,17 @@ class MapResolver:
 # ----------------------------------
 # ---------- SIMPLE USAGE ----------
 # ----------------------------------
-_DEFAULT_RESOLVER = MapResolver()        # global resolver
+
+_DEFAULT_RESOLVER = MapResolver()
 
 def setGlobalMaps(maps, *, name=None, priority=0):
-    """
+    '''
     Register a global map or datamap class into the default resolver.
 
     maps: datamap class OR dict
     name: optional layer name (default = class name or 'global')
     priority: layer priority (lower = earlier)
-    """
+    '''
     layer_name = name or getattr(maps, "__name__", "global")
     layer = Layer(layer_name, maps=[maps], priority=priority)
     _DEFAULT_RESOLVER.layers.add_layer(layer)

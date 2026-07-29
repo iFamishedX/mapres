@@ -1,5 +1,5 @@
 run: true
-version: '2.4-alpha.11'
+version: '2.4-alpha.12'
 description: |
   - Dev 1-4:
     - Fix some typing issues
@@ -34,3 +34,6 @@ description: |
     - Datamap fixes
   - Alpha 11:
     - Tightened datamap regexes
+  - Alpha 12:
+    - Tightened datamap regexes
+    - Added escape pipeline
