@@ -2,15 +2,15 @@ import re
 from dataclasses import dataclass, fields, is_dataclass
 
 class syntax:
-    double_braces = r'\{\{([^{}]+)\}\}'     # {{value}}
-    dollars       = r'\$\{([^{}]+)\}'       # ${value}
-    angles        = r'<([^<>]+)>'           # <value>
-    percents      = r'%([^%]+)%'            # %value%
-    at_tags       = r'@([^@]+)@'            # @value@
-    hash_tags     = r'#([^#]+)#'            # #value#
-    pipe_tags     = r'\|([^|]+)\|'          # |value|
-    paren_dollar  = r'\$\(([^)]+)\)'        # $(value)
-    colons        = r':([^:\n]+):'          # :value:
+    double_braces = r'\{\{([A-Za-z0-9_]+)\}\}'     # {{value}}
+    dollars       = r'\$\{([A-Za-z0-9_]+)\}'       # ${value}
+    angles        = r'<([A-Za-z0-9_]+)>'           # <value>
+    percents      = r'%([A-Za-z0-9_]+)%'           # %value%
+    at_tags       = r'@([A-Za-z0-9_]+)@'           # @value@
+    hash_tags     = r'#([A-Za-z0-9_]+)#'           # #value#
+    pipe_tags     = r'\|([A-Za-z0-9_]+)\|'         # |value|
+    paren_dollar  = r'\$\(([A-Za-z0-9_]+)\)'       # $(value)
+    colons        = r':([A-Za-z0-9_]+):'           # :value:
 
 
 @dataclass

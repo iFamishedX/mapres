@@ -1,5 +1,5 @@
 run: true
-version: '2.4-alpha.10'
+version: '2.4-alpha.11'
 description: |
   - Dev 1-4:
     - Fix some typing issues
@@ -32,3 +32,5 @@ description: |
     - Datamap overhaul
   - Alpha 10:
     - Datamap fixes
+  - Alpha 11:
+    - Tightened datamap regexes
