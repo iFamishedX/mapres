@@ -38,3 +38,6 @@ description: |
   - Nested class datamaps (hierarchical maps)
   - MissingKeyError + per‑map missing_key modes
   - Recursion moved to evaluator (uniform + syntax‑scoped)
+  Dev 16:
+  - Added ignore_delimiters paramater to datamap
+    - Updated evaulator logic to apply

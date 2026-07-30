@@ -63,6 +63,10 @@ class Evaluator:
     def _eval_ident(self, node: IdentNode):
         name = node.name
 
+        # ignore_delimiters: treat token as literal for this syntax
+        if self._syntax_ignores_delimiters(node.syntax):
+            return self._literal_from_syntax(name, node.syntax)
+
         # cycle detection
         if name in self._seen:
             raise EvaluationError(f"Cycle detected in identifier '{name}'")
@@ -93,6 +97,11 @@ class Evaluator:
     # call (nested token)
     def _eval_call(self, node: CallNode):
         outer = node.name
+
+        # ignore_delimiters: treat call token as literal
+        if self._syntax_ignores_delimiters(node.syntax):
+            arg_text = self._eval(node.arg)
+            return self._literal_from_syntax(outer, node.syntax, is_call=True, arg_text=arg_text)
 
         if outer in self._seen:
             raise EvaluationError(f"Cycle detected in call '{outer}'")
@@ -157,3 +166,56 @@ class Evaluator:
         tokens = Tokenizer(text).tokenize()
         ast = Parser(tokens).parse()
         return self.evaluate(ast)
+
+    def _syntax_ignores_delimiters(self, syntax_name: str) -> bool:
+        for m in self.layerstack.all_maps():
+            if getattr(m, '__syntax__', None) == syntax_name:
+                if getattr(m, '__ignore_delimiters__', False):
+                    return True
+        return False
+
+    def _literal_from_syntax(self, name: str, syntax_name: str, is_call: bool = False, arg_text: str | None = None) -> str:
+        if not is_call:
+            if syntax_name == 'colons':
+                return f':{name}:'
+            if syntax_name == 'braces':
+                return f'{{{{{name}}}}}'
+            if syntax_name == 'dollars':
+                return f'${{{name}}}'
+            if syntax_name == 'angles':
+                return f'<{name}>'
+            if syntax_name == 'pipes':
+                return f'|{name}|'
+            if syntax_name == 'percents':
+                return f'%{name}%'
+            if syntax_name == 'paren_dollars':
+                return f'$({name})'
+            if syntax_name == 'at_tags':
+                return f'@{name}@'
+            if syntax_name == 'hash_tags':
+                return f'#{name}#'
+            return name
+
+        # call literal: syntax-specific wrapping of name(arg_text)
+        arg = arg_text or ''
+        inner = f'{name}({arg})'
+
+        if syntax_name == 'colons':
+            return f':{inner}:'
+        if syntax_name == 'braces':
+            return f'{{{{{inner}}}}}'
+        if syntax_name == 'dollars':
+            return f'${{{inner}}}'
+        if syntax_name == 'angles':
+            return f'<{inner}>'
+        if syntax_name == 'pipes':
+            return f'|{inner}|'
+        if syntax_name == 'percents':
+            return f'%{inner}%'
+        if syntax_name == 'paren_dollars':
+            return f'$({inner})'
+        if syntax_name == 'at_tags':
+            return f'@{inner}@'
+        if syntax_name == 'hash_tags':
+            return f'#{inner}#'
+        return inner
