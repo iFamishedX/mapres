@@ -8,7 +8,7 @@ class Node:
 
 @dataclass
 class TemplateNode(Node):
-    children: list[NotADirectoryError]
+    children: list[Node]
 
 
 @dataclass
@@ -18,7 +18,8 @@ class TextNode(Node):
 
 @dataclass
 class IdentNode(Node):
-    name: str  # supports dots: server.status.online
+    name: str
+    syntax: str
 
 
 @dataclass

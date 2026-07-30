@@ -1,5 +1,5 @@
 run: true
-version: '3-dev.5'
+version: '3-dev.6'
 description: |
   Dev 1:
   - Full engine rewrite:
@@ -16,3 +16,5 @@ description: |
   Dev 5:
   - Updated changelog format
   - Fix init
+  Dev 6:
+  - Fix

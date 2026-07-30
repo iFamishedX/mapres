@@ -76,7 +76,7 @@ class Parser:
 
         # simple identifier: IDENT
         self.expect(closing_type)
-        return IdentNode(name=name)
+        return IdentNode(name=name, syntax=syntax_name)
 
     # --- syntax-bound token handlers ---
 
