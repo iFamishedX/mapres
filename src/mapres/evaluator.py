@@ -150,7 +150,7 @@ class Evaluator:
 
     def _has_recursive_maps(self):
         for m in self.layerstack.all_maps():
-            if getattr(m, '__recursive__', False):
+            if getattr(m, '__recursive__', False) is True:
                 return True
         return False
 
@@ -158,7 +158,7 @@ class Evaluator:
         depths = [
             getattr(m, '__max_depth__', 10)
             for m in self.layerstack.all_maps()
-            if getattr(m, '__recursive__', False)
+            if getattr(m, '__recursive__', False) is True
         ]
         return max(depths) if depths else 0
 

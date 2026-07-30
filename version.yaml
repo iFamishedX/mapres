@@ -1,5 +1,5 @@
 run: true
-version: '3-dev.16'
+version: '3-dev.17'
 description: |
   Dev 1:
   - Full engine rewrite:
@@ -41,3 +41,5 @@ description: |
   Dev 16:
   - Added ignore_delimiters paramater to datamap
     - Updated evaulator logic to apply
+  Dev 17:
+  - Fixed critical logic bug
