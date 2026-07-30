@@ -1,5 +1,5 @@
 from .tokenizer import TokenType, Token
-from .ast import TemplateNode, TextNode, IdentNode, CallNode
+from .ast import TemplateNode, TextNode, IdentNode, CallNode, Node
 
 
 class ParserError(Exception):
