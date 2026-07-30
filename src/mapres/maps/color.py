@@ -1,6 +1,6 @@
-from mapres.datamap import datamap, syntax
+from mapres.datamap import datamap
 
-@datamap(syntax=syntax.angles) # produces <>
+@datamap.angles
 class ColorMap:
     black: str = '\033[30m'
     dark_blue: str = '\033[34m'
@@ -22,13 +22,8 @@ class ColorMap:
     bold: str = '\033[1m'
     italic: str = '\033[3m'
 
-    def as_dict(self):
-        return {f'<{k}>': getattr(self, k) for k in self.__dataclass_fields__}
-
-# ASCII color map
 ascii_colors = ColorMap()
 
-# Minecraft color map
 mc_colors = ColorMap(
     black='§0',
     dark_blue='§1',
@@ -51,7 +46,6 @@ mc_colors = ColorMap(
     italic='§o'
 )
 
-# Color strip map
 strip_colors = ColorMap(
     black='',
     dark_blue='',

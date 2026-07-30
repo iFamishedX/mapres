@@ -1,39 +1,8 @@
 run: true
-version: '2.4'
+version: '3-dev.1'
 description: |
-  - Dev 1-4:
-    - Fix some typing issues
-  - Dev 5:
-    - Changed versioning
-    - Added setGlobalMaps
-  - Dev 6:
-    - Renamed "max_depth" paramater to "passes_default"
-    - Added "passes" paramater override to res()
-  - Alpha 1:
-    - Now in Alpha branch
-    - Improved simple usability
-    - Added setDefaultPasses()
-  - Alpha 2:
-    - Fixed wrong _DEFAULT_PASSES call
-  - Alpha 3:
-    - Added setDefaultPasses() import
-  - Alpha 4:
-    - Added new syntaxes for datamaps
-    - Removed braces syntax
-  - Alpha 5:
-    - Added colons syntax
-  - Alpha 6:
-    - Testing new string literal transformation
-  - Alpha 7:
-    - Revert changes
-  - Alpha 8:
-    - Fixed Unhandled resolver error
-  - Alpha 9:
-    - Datamap overhaul
-  - Alpha 10:
-    - Datamap fixes
-  - Alpha 11:
-    - Tightened datamap regexes
-  - Alpha 12:
-    - Tightened datamap regexes
-    - Added escape pipeline
+  - Dev 1:
+    - Full engine rewrite:
+      - Pipeline: tokenizer -> parser -> AST -> evaluator
+      - Nested tokens and hierarchical identifiers now fully supported
+      - Regex system removed; resolution is deterministic and syntax‑scoped.

@@ -1,7 +1,12 @@
+# layers.py
+
 class Layer:
-    '''Holds a map with a priority'''
-    def __init__(self, name, maps=None, priority=0):
-        self.name = name
+    """
+    A single layer containing one or more maps.
+    Priority determines resolution order.
+    Lower priority = earlier lookup.
+    """
+    def __init__(self, maps=None, priority=0):
         self.maps = maps or []
         self.priority = priority
 
@@ -13,31 +18,39 @@ class Layer:
 
 
 class LayerStack:
-    '''Manages ordered layers'''
-    def __init__(self, layers=None):
-        self.layers = {}
-        if layers:
-            for layer in layers:
-                self.layers[layer.name] = layer
+    """
+    A simple ordered list of layers.
+    No names, no dicts, no complexity.
+    Just priority-sorted layers.
+    """
+    def __init__(self):
+        self.layers = []  # list of Layer objects
 
-    def add_layer(self, layer):
-        self.layers[layer.name] = layer
-
-    def remove_layer(self, name):
-        if name in self.layers:
-            del self.layers[name]
-
-    def get_layer(self, name):
-        return self.layers.get(name)
-
-    def clone(self):
-        return LayerStack(list(self.layers.values()))
+    def add_layer(self, maps, priority=0):
+        """
+        Add a new layer containing one or more maps.
+        maps: datamap instance, datamap class, or dict
+        priority: lower = earlier lookup
+        """
+        layer = Layer(
+            maps=[maps] if not isinstance(maps, list) else maps,
+            priority=priority
+        )
+        self.layers.append(layer)
+        self.layers.sort(key=lambda l: l.priority)
 
     def all_maps(self):
-        ordered = sorted(self.layers.values(), key=lambda l: l.priority)
-        for layer in ordered:
+        """
+        Yield all maps in priority order.
+        """
+        for layer in self.layers:
             for m in layer:
                 yield m
 
-    def __iter__(self):
-        return self.all_maps()
+    def clone(self):
+        """
+        Return a shallow copy of the layerstack.
+        """
+        new = LayerStack()
+        new.layers = list(self.layers)
+        return new

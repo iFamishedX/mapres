@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
-from mapres.datamap import datamap, syntax
+from mapres.datamap import datamap
 
 
 def safe_zoneinfo(tz: str):
@@ -10,7 +10,7 @@ def safe_zoneinfo(tz: str):
         return timezone.utc
 
 
-@datamap(syntax=syntax.percents, mode='dynamic')
+@datamap.percents.dynamic
 class TimeMap:
     _default_tz = safe_zoneinfo("America/Chicago")
 
