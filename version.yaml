@@ -1,5 +1,5 @@
 run: true
-version: '3-dev.7'
+version: '3-dev.8'
 description: |
   Dev 1:
   - Full engine rewrite:
@@ -20,3 +20,5 @@ description: |
   - Fix
   Dev 7:
   - Fixed tokenizer logic
+  Dev 8:
+  - Fixed parser
