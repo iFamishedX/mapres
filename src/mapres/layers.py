@@ -1,5 +1,3 @@
-# layers.py
-
 class Layer:
     """
     A single layer containing one or more maps.

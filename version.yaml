@@ -1,8 +1,11 @@
 run: true
-version: '3-dev.1'
+version: '3-dev.2'
 description: |
   - Dev 1:
     - Full engine rewrite:
       - Pipeline: tokenizer -> parser -> AST -> evaluator
       - Nested tokens and hierarchical identifiers now fully supported
       - Regex system removed; resolution is deterministic and syntax‑scoped.
+  - Dev 2:
+    - Clean up
+    - Bug fixes

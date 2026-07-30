@@ -1,4 +1,4 @@
-from ast import TemplateNode, TextNode, IdentNode, CallNode
+from .ast import TemplateNode, TextNode, IdentNode, CallNode
 
 
 class EvaluationError(Exception):
