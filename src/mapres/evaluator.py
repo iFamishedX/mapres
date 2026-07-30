@@ -11,15 +11,11 @@ class Evaluator:
         self.ctx = ctx or {}
         self._seen = set()  # cycle detection
 
-    # -----------------------------
-    # PUBLIC API
-    # -----------------------------
+    # public api
     def evaluate(self, node):
         return self._eval(node)
 
-    # -----------------------------
-    # INTERNAL DISPATCH
-    # -----------------------------
+    # internal dispatch
     def _eval(self, node):
         if isinstance(node, TemplateNode):
             return self._eval_template(node)
@@ -35,18 +31,14 @@ class Evaluator:
 
         raise EvaluationError(f"Unknown AST node: {node}")
 
-    # -----------------------------
-    # TEMPLATE
-    # -----------------------------
+    # template
     def _eval_template(self, node: TemplateNode):
         parts = []
         for child in node.children:
             parts.append(self._eval(child))
         return "".join(parts)
 
-    # -----------------------------
-    # IDENTIFIER
-    # -----------------------------
+    # identifier
     def _eval_ident(self, node: IdentNode):
         name = node.name
 
@@ -77,9 +69,7 @@ class Evaluator:
         self._seen.remove(name)
         raise EvaluationError(f"Missing key '{name}'")
 
-    # -----------------------------
-    # CALL (nested token)
-    # -----------------------------
+    # call (nested token)
     def _eval_call(self, node: CallNode):
         outer = node.name
 
@@ -110,9 +100,7 @@ class Evaluator:
         self._seen.remove(outer)
         raise EvaluationError(f"Missing nested key '{outer}({arg_value})'")
 
-    # -----------------------------
-    # HELPERS
-    # -----------------------------
+    # helpers
     def _map_to_dict(self, m):
         if hasattr(m, "as_map"):
             return m.as_map()
