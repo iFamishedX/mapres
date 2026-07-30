@@ -27,14 +27,23 @@ class DataMap:
 
     Syntax metadata (__syntax__) determines which delimiters
     this map responds to (angle, brace, colon, percent, pipe, etc).
+
+    Mode metadata (__mode__) controls behavior:
+        - None: plain static map
+        - "dynamic": values may be provided by callables/providers
+        - "config": config-style maps (no dynamic evaluation)
+        - "callable": map exposes callable methods for nested calls
     '''
     __syntax__: str = None
-    __mode__: str | None = None  # "dynamic", "config", or None
+    __mode__: str | None = None  # "dynamic", "config", "callable", or None
 
     def as_map(self):
         '''
         Convert datamap fields into a dictionary.
         If mode='dynamic', evaluate provider functions.
+
+        Callable mode does NOT change as_map() behavior; methods are
+        used by the evaluator, not exported as map entries.
         '''
         result = {}
 
@@ -59,15 +68,7 @@ class DataMap:
 
 # main decorator factory
 def datamap(_cls=None, *, syntax=None, mode=None):
-    '''
-    @datamap decorator.
-
-    Supports:
-        @datamap
-        @datamap(mode='dynamic')
-        @datamap(syntax='angle')
-        @datamap(syntax='angle', mode='config')
-    '''
+    '''@datamap decorator'''
     def wrap(cls):
         cls.__syntax__ = syntax
         cls.__mode__ = mode
@@ -90,6 +91,8 @@ class _SyntaxFactory:
         @datamap.angles
         @datamap.angles(mode='config')
         @datamap.angles.config
+        @datamap.angles.dynamic
+        @datamap.angles.callable
     '''
     def __init__(self, syntax_name):
         self._syntax = syntax_name
@@ -106,24 +109,30 @@ class _SyntaxFactory:
     def config(self):
         # Case 3: @datamap.angles.config
         return datamap(syntax=self._syntax, mode='config')
-    
+
     @property
     def dynamic(self):
+        # @datamap.angles.dynamic
         return datamap(syntax=self._syntax, mode='dynamic')
 
+    @property
+    def callable(self):
+        # @datamap.angles.callable
+        return datamap(syntax=self._syntax, mode='callable')
 
 
 # build syntax shortcuts
-datamap.braces      = _SyntaxFactory(syntax.braces)
-
-datamap.dollars     = _SyntaxFactory(syntax.dollars)
-datamap.angles      = _SyntaxFactory(syntax.angles)
-datamap.percents    = _SyntaxFactory(syntax.percents)
-datamap.pipes   = _SyntaxFactory(syntax.pipes)
-datamap.colons      = _SyntaxFactory(syntax.colons)
-datamap.at_tags     = _SyntaxFactory(syntax.at_tags)
-datamap.hash_tags   = _SyntaxFactory(syntax.hash_tags)
+datamap.braces        = _SyntaxFactory(syntax.braces)
+datamap.dollars       = _SyntaxFactory(syntax.dollars)
+datamap.angles        = _SyntaxFactory(syntax.angles)
+datamap.percents      = _SyntaxFactory(syntax.percents)
+datamap.pipes         = _SyntaxFactory(syntax.pipes)
+datamap.colons        = _SyntaxFactory(syntax.colons)
+datamap.at_tags       = _SyntaxFactory(syntax.at_tags)
+datamap.hash_tags     = _SyntaxFactory(syntax.hash_tags)
 datamap.paren_dollars = _SyntaxFactory(syntax.paren_dollars)
 
-# global mode shortcut
-datamap.config = datamap(mode='config')
+# global mode shortcuts
+datamap.config   = datamap(mode='config')
+datamap.dynamic  = datamap(mode='dynamic')
+datamap.callable = datamap(mode='callable')

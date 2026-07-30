@@ -1,5 +1,5 @@
 run: true
-version: '3-dev.8'
+version: '3-dev.9'
 description: |
   Dev 1:
   - Full engine rewrite:
@@ -22,3 +22,7 @@ description: |
   - Fixed tokenizer logic
   Dev 8:
   - Fixed parser
+  Dev 9:
+  - Fixed datamaps
+  - Added "callable" mode
+  - Fixed logic
