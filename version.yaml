@@ -1,5 +1,5 @@
 run: true
-version: '3-dev.14'
+version: '3-dev.15'
 description: |
   Dev 1:
   - Full engine rewrite:
@@ -32,3 +32,9 @@ description: |
   - Patched tokenizer to correctly allow escapes
   Dev 13-14:
   - Datamap supports both class and instance
+  Dev 15:
+  - Grouped tokenizer rewrite (paired/toggle/mixed)
+  - Correct IDENT grammar + delimiter state fixes
+  - Nested class datamaps (hierarchical maps)
+  - MissingKeyError + per‑map missing_key modes
+  - Recursion moved to evaluator (uniform + syntax‑scoped)

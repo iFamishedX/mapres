@@ -35,7 +35,9 @@ class DataMap:
         - "callable": map exposes callable methods for nested calls
     '''
     __syntax__: str = None
-    __mode__: str | None = None  # "dynamic", "config", "callable", or None
+    __mode__: str | None = None # "dynamic", "config", "callable", or None
+    __recursive__: bool = False
+    __missing_key__: str = 'error'  # 'error', 'silent', 'placeholder'
 
     def as_map(self):
         '''
@@ -47,8 +49,9 @@ class DataMap:
         '''
         result = {}
 
+        # dataclass fields
         for f in fields(self):
-            if not f.init or f.name in ('__syntax__', '__mode__'):
+            if not f.init or f.name in ('__syntax__', '__mode__', '__recursive__', '__missing_key__'):
                 continue
 
             val = getattr(self, f.name)
@@ -63,15 +66,44 @@ class DataMap:
 
             result[f.name] = val
 
+        # nested classes > nested dicts
+        for name, obj in self.__class__.__dict__.items():
+            if name.startswith('__'):
+                continue
+            if isinstance(obj, type):
+                result[name] = self._class_to_dict(obj)
+
         return result
+
+    def _class_to_dict(self, cls):
+        out = {}
+
+        # dataclass fields on nested class
+        if is_dataclass(cls):
+            dummy = cls()  # assumes no required __init__ args
+            for f in fields(dummy):
+                if not f.init:
+                    continue
+                out[f.name] = getattr(dummy, f.name)
+
+        # nested classes inside nested class
+        for name, obj in cls.__dict__.items():
+            if name.startswith('__'):
+                continue
+            if isinstance(obj, type):
+                out[name] = self._class_to_dict(obj)
+
+        return out
 
 
 # main decorator factory
-def datamap(_cls=None, *, syntax=None, mode=None):
+def datamap(_cls=None, *, syntax=None, mode=None, recursive=None, missing_key=None):
     '''@datamap decorator'''
     def wrap(cls):
         cls.__syntax__ = syntax
         cls.__mode__ = mode
+        cls.__recursive__ = recursive
+        cls.__missing_key__ = missing_key or 'error'
         namespace = dict(cls.__dict__)
         namespace['__dict__'] = {}
         rules_obj = namespace.get('rules', None)

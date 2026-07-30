@@ -3,7 +3,7 @@ from .parser import Parser
 from .evaluator import Evaluator
 from .layers import LayerStack
 from .cache import LRUCache
-from .exceptions import MapResError
+from .exceptions import MapResError, MissingKeyError
 
 
 class MapResolver:
@@ -65,8 +65,18 @@ class MapResolver:
 
             return result
 
+        except MissingKeyError as exc:
+            mode = self._resolve_missing_key_mode()
+            if mode == 'error':
+                raise MapResError(f'Resolver error: {exc}') from exc
+            if mode == 'silent':
+                return text
+            if mode == 'placeholder':
+                return f'<missing:{exc.key}>'
+            raise MapResError(f'Resolver error: {exc}') from exc
+
         except Exception as exc:
-            raise MapResError(f"Resolver error: {exc}") from exc
+            raise MapResError(f'Resolver error: {exc}') from exc
 
     # ---------------------------------------
     # LAYERSTACK BUILDING
@@ -91,6 +101,13 @@ class MapResolver:
             return temp
 
         return self.layers
+
+    def _resolve_missing_key_mode(self):
+        for m in self.layers.all_maps():
+            mode = getattr(m, '__missing_key__', None)
+            if mode is not None:
+                return mode
+        return 'error'
 
 
 # ---------------------------------------

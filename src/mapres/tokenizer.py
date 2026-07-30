@@ -28,8 +28,8 @@ class Token:
 
     def __repr__(self):
         if self.value is not None:
-            return f"Token({self.type}, {self.value!r}, pos={self.pos})"
-        return f"Token({self.type}, pos={self.pos})"
+            return f'Token({self.type}, {self.value!r}, pos={self.pos})'
+        return f'Token({self.type}, pos={self.pos})'
 
 
 class Tokenizer:
@@ -38,9 +38,14 @@ class Tokenizer:
         self.i = 0
         self.n = len(text)
         self.tokens = []
+
+        # toggle states
         self.in_pipe = False
         self.in_percent = False
         self.in_colon = False
+
+        # mixed states
+        self.in_dollar = False
 
     def peek(self, k=0):
         idx = self.i + k
@@ -68,6 +73,7 @@ class Tokenizer:
         while self.i < self.n:
             ch = self.peek()
 
+            # escapes
             if self.match(r'\:'):
                 buf.append(':'); self.advance(2); continue
             if self.match(r'\<'):
@@ -89,43 +95,57 @@ class Tokenizer:
             if self.match(r'\)'):
                 buf.append(')'); self.advance(2); continue
 
-            if self.match("{{"):
+            # --- paired delimiters ---
+
+            # braces {{ }}
+            if self.match('{{'):
                 flush_text()
                 self.emit(TokenType.BRACE_OPEN)
                 self.advance(2)
                 continue
 
-            if self.match("}}"):
+            if self.match('}}'):
                 flush_text()
                 self.emit(TokenType.BRACE_CLOSE)
                 self.advance(2)
                 continue
 
-            if self.match("${"):
-                flush_text()
-                self.emit(TokenType.DOLLAR_OPEN)
-                self.advance(2)
-                continue
-
-            if self.match("}"):
-                flush_text()
-                self.emit(TokenType.DOLLAR_CLOSE)
-                self.advance()
-                continue
-
-            if self.match("<"):
+            # angles < >
+            if self.match('<'):
                 flush_text()
                 self.emit(TokenType.ANGLE_OPEN)
                 self.advance()
                 continue
 
-            if self.match(">"):
+            if self.match('>'):
                 flush_text()
                 self.emit(TokenType.ANGLE_CLOSE)
                 self.advance()
                 continue
 
-            if self.match("|"):
+            # --- mixed delimiters (dollars) ---
+
+            if self.match('${'):
+                flush_text()
+                self.emit(TokenType.DOLLAR_OPEN)
+                self.in_dollar = True
+                self.advance(2)
+                continue
+
+            if ch == '}':
+                flush_text()
+                if self.in_dollar:
+                    self.emit(TokenType.DOLLAR_CLOSE)
+                    self.in_dollar = False
+                else:
+                    buf.append('}')
+                self.advance()
+                continue
+
+            # --- toggle delimiters ---
+
+            # pipes |...|
+            if self.match('|'):
                 flush_text()
                 if not self.in_pipe:
                     self.emit(TokenType.PIPE_OPEN)
@@ -136,7 +156,8 @@ class Tokenizer:
                 self.advance()
                 continue
 
-            if self.match("%"):
+            # percents %...%
+            if self.match('%'):
                 flush_text()
                 if not self.in_percent:
                     self.emit(TokenType.PERCENT_OPEN)
@@ -147,7 +168,8 @@ class Tokenizer:
                 self.advance()
                 continue
 
-            if self.match(":"):
+            # colons :...:
+            if self.match(':'):
                 flush_text()
                 if not self.in_colon:
                     self.emit(TokenType.COLON_OPEN)
@@ -158,26 +180,50 @@ class Tokenizer:
                 self.advance()
                 continue
 
-            if ch == "(":
+            # --- parens ---
+
+            if ch == '(':
                 flush_text()
                 self.emit(TokenType.LPAREN)
                 self.advance()
                 continue
 
-            if ch == ")":
+            if ch == ')':
                 flush_text()
                 self.emit(TokenType.RPAREN)
                 self.advance()
                 continue
 
-            if ch.isalpha():
+            # --- IDENT (your rules) ---
+
+            if ch.isalnum():
                 flush_text()
                 start = self.i
-                while self.peek().isalnum() or self.peek() in "._":
-                    self.advance()
+
+                # first char: [a-zA-Z0-9]
+                self.advance()
+
+                # middle chars: [a-zA-Z0-9._]*
+                while True:
+                    nxt = self.peek()
+                    if not nxt:
+                        break
+                    if nxt.isalnum() or nxt in '._':
+                        self.advance()
+                    else:
+                        break
+
                 ident = self.text[start:self.i]
-                self.emit(TokenType.IDENT, ident)
+
+                # enforce: no leading/trailing '_', no '-'
+                if ident.startswith('_') or ident.endswith('_') or '-' in ident:
+                    # treat as TEXT instead
+                    buf.append(ident)
+                else:
+                    self.emit(TokenType.IDENT, ident)
                 continue
+
+            # --- fallback: TEXT ---
 
             buf.append(ch)
             self.advance()

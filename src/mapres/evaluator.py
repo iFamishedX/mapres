@@ -1,7 +1,10 @@
 from .ast import TemplateNode, TextNode, IdentNode, CallNode
+from .tokenizer import Tokenizer
+from .parser import Parser
+from .exceptions import MapResError, MissingKeyError
 
 
-class EvaluationError(Exception):
+class EvaluationError(MapResError):
     pass
 
 
@@ -29,14 +32,32 @@ class Evaluator:
         if isinstance(node, CallNode):
             return self._eval_call(node)
 
-        raise EvaluationError(f"Unknown AST node: {node}")
+        raise EvaluationError(f'Unknown AST node: {node}')
 
     # template
     def _eval_template(self, node: TemplateNode):
         parts = []
         for child in node.children:
             parts.append(self._eval(child))
-        return "".join(parts)
+        out = ''.join(parts)
+
+        # recursion over full template output
+        if self._has_recursive_maps():
+            seen = set()
+            depth = 0
+            max_depth = self._get_max_depth()
+
+            while depth < max_depth:
+                new_out = self._re_resolve(out)
+                if new_out == out:
+                    break
+                if new_out in seen:
+                    raise EvaluationError('Cycle detected in template recursion')
+                seen.add(new_out)
+                out = new_out
+                depth += 1
+
+        return out
 
     # identifier
     def _eval_ident(self, node: IdentNode):
@@ -47,7 +68,7 @@ class Evaluator:
             raise EvaluationError(f"Cycle detected in identifier '{name}'")
         self._seen.add(name)
 
-        parts = name.split(".")
+        parts = name.split('.')
 
         # 1. ctx first
         val = self._lookup_hierarchical(self.ctx, parts)
@@ -57,7 +78,7 @@ class Evaluator:
 
         # 2. syntax-bound maps
         for m in self.layerstack.all_maps():
-            if getattr(m, "__syntax__", None) not in (None, node.syntax):
+            if getattr(m, '__syntax__', None) not in (None, node.syntax):
                 continue
 
             d = self._map_to_dict(m)
@@ -67,7 +88,7 @@ class Evaluator:
                 return str(val)
 
         self._seen.remove(name)
-        raise EvaluationError(f"Missing key '{name}'")
+        raise MissingKeyError(name)
 
     # call (nested token)
     def _eval_call(self, node: CallNode):
@@ -88,7 +109,7 @@ class Evaluator:
 
         # syntax-bound maps
         for m in self.layerstack.all_maps():
-            if getattr(m, "__syntax__", None) not in (None, node.syntax):
+            if getattr(m, '__syntax__', None) not in (None, node.syntax):
                 continue
 
             d = self._map_to_dict(m)
@@ -98,15 +119,15 @@ class Evaluator:
                 return str(val)
 
         self._seen.remove(outer)
-        raise EvaluationError(f"Missing nested key '{outer}({arg_value})'")
+        raise MissingKeyError(f'{outer}({arg_value})')
 
     # helpers
     def _map_to_dict(self, m):
-        if hasattr(m, "as_map"):
+        if hasattr(m, 'as_map'):
             return m.as_map()
         if isinstance(m, dict):
             return m
-        raise EvaluationError(f"Invalid map object: {m}")
+        raise EvaluationError(f'Invalid map object: {m}')
 
     def _lookup_hierarchical(self, root, parts):
         cur = root
@@ -117,3 +138,22 @@ class Evaluator:
                 return None
             cur = cur[p]
         return cur
+
+    def _has_recursive_maps(self):
+        for m in self.layerstack.all_maps():
+            if getattr(m, '__recursive__', False):
+                return True
+        return False
+
+    def _get_max_depth(self):
+        depths = [
+            getattr(m, '__max_depth__', 10)
+            for m in self.layerstack.all_maps()
+            if getattr(m, '__recursive__', False)
+        ]
+        return max(depths) if depths else 0
+
+    def _re_resolve(self, text: str) -> str:
+        tokens = Tokenizer(text).tokenize()
+        ast = Parser(tokens).parse()
+        return self.evaluate(ast)
