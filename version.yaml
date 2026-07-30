@@ -1,5 +1,5 @@
 run: true
-version: '3-dev.2'
+version: '3-dev.3'
 description: |
   - Dev 1:
     - Full engine rewrite:
@@ -9,3 +9,5 @@ description: |
   - Dev 2:
     - Clean up
     - Bug fixes
+  - Dev 3:
+    - Fixed AST

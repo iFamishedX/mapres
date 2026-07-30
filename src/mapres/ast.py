@@ -7,6 +7,11 @@ class Node:
 
 
 @dataclass
+class TemplateNode(Node):
+    children: list[NotADirectoryError]
+
+
+@dataclass
 class TextNode(Node):
     text: str
 
@@ -19,5 +24,5 @@ class IdentNode(Node):
 @dataclass
 class CallNode(Node):
     name: str          # outer identifier
-    arg: Node          # single argument (Template fragment)
-    syntax: str        # which delimiter type produced it (colon/brace/etc)
+    arg: Node          # nested TemplateNode
+    syntax: str        # which delimiter type produced it
