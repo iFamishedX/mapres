@@ -105,7 +105,10 @@ def setGlobalMaps(maps, *, priority=0):
     Lower priority = earlier lookup.
     """
     if isinstance(maps, type):
-        maps = maps()
+        try:
+            maps = maps()
+        except TypeError:
+            pass
     _DEFAULT_RESOLVER.layers.add_layer(maps, priority=priority)
 
 def res(text: str, **ctx) -> str:
