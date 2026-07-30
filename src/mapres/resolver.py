@@ -104,6 +104,8 @@ def setGlobalMaps(maps, *, priority=0):
     Register a global map or datamap instance/class/dict.
     Lower priority = earlier lookup.
     """
+    if isinstance(maps, type):
+        maps = maps()
     _DEFAULT_RESOLVER.layers.add_layer(maps, priority=priority)
 
 def res(text: str, **ctx) -> str:

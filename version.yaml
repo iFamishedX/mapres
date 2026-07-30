@@ -1,5 +1,5 @@
 run: true
-version: '3-dev.12'
+version: '3-dev.13'
 description: |
   Dev 1:
   - Full engine rewrite:
@@ -30,3 +30,5 @@ description: |
   - Simplified comments
   Dev 11-12:
   - Patched tokenizer to correctly allow escapes
+  Dev 13:
+  - Datamap returns both class and instance

@@ -78,7 +78,7 @@ def datamap(_cls=None, *, syntax=None, mode=None):
         cls = type(cls.__name__, (DataMap,), namespace)
         if rules_obj is not None:
             setattr(cls, 'rules', rules_obj)
-        return dataclass(frozen=False)(cls)
+        return dataclass(frozen=False)(cls)()
     if _cls is not None:
         return wrap(_cls)
     return wrap
