@@ -50,6 +50,7 @@ class Tokenizer:
         self.in_pipe = False
         self.in_percent = False
         self.in_colon = False
+        self.escaped = False
 
     def peek(self, k=0):
         idx = self.i + k
@@ -79,27 +80,32 @@ class Tokenizer:
 
             # ESCAPES
             if self.match(r'\:'):
-                buf.append(':'); self.advance(2); continue
+                buf.append(':'); self.advance(2); self.escaped = True; continue
             if self.match(r'\<'):
-                buf.append('<'); self.advance(2); continue
+                buf.append('<'); self.advance(2); self.escaped = True; continue
             if self.match(r'\>'):
-                buf.append('>'); self.advance(2); continue
+                buf.append('>'); self.advance(2); self.escaped = True; continue
             if self.match(r'\%'):
-                buf.append('%'); self.advance(2); continue
+                buf.append('%'); self.advance(2); self.escaped = True; continue
             if self.match(r'\$'):
-                buf.append('$'); self.advance(2); continue
+                buf.append('$'); self.advance(2); self.escaped = True; continue
             if self.match(r'\{'):
-                buf.append('{'); self.advance(2); continue
+                buf.append('{'); self.advance(2); self.escaped = True; continue
             if self.match(r'\}'):
-                buf.append('}'); self.advance(2); continue
+                buf.append('}'); self.advance(2); self.escaped = True; continue
             if self.match(r'\|'):
-                buf.append('|'); self.advance(2); continue
+                buf.append('|'); self.advance(2); self.escaped = True; continue
             if self.match(r'\('):
-                buf.append('('); self.advance(2); continue
+                buf.append('('); self.advance(2); self.escaped = True; continue
             if self.match(r'\)'):
-                buf.append(')'); self.advance(2); continue
+                buf.append(')'); self.advance(2); self.escaped = True; continue
 
-            # DOUBLE BRACES {{value}}
+            if self.escaped:
+                buf.append(ch)
+                self.escaped = False
+                self.advance()
+                continue
+
             if self.match("{{"):
                 flush_text()
                 self.emit(TokenType.BRACE_OPEN)
@@ -112,7 +118,6 @@ class Tokenizer:
                 self.advance(2)
                 continue
 
-            # DOLLARS ${value}
             if self.match("${"):
                 flush_text()
                 self.emit(TokenType.DOLLAR_OPEN)
@@ -125,7 +130,6 @@ class Tokenizer:
                 self.advance()
                 continue
 
-            # ANGLES <value>
             if self.match("<"):
                 flush_text()
                 self.emit(TokenType.ANGLE_OPEN)
@@ -138,7 +142,6 @@ class Tokenizer:
                 self.advance()
                 continue
 
-            # PIPES |value|
             if self.match("|"):
                 flush_text()
                 if not self.in_pipe:
@@ -150,7 +153,6 @@ class Tokenizer:
                 self.advance()
                 continue
 
-            # PERCENTS %value%
             if self.match("%"):
                 flush_text()
                 if not self.in_percent:
@@ -162,7 +164,6 @@ class Tokenizer:
                 self.advance()
                 continue
 
-            # COLONS :value:
             if self.match(":"):
                 flush_text()
                 if not self.in_colon:
@@ -174,7 +175,6 @@ class Tokenizer:
                 self.advance()
                 continue
 
-            # PARENTHESES
             if ch == "(":
                 flush_text()
                 self.emit(TokenType.LPAREN)
@@ -187,7 +187,6 @@ class Tokenizer:
                 self.advance()
                 continue
 
-            # IDENTIFIERS (with dots)
             if ch.isalpha():
                 flush_text()
                 start = self.i
@@ -197,7 +196,6 @@ class Tokenizer:
                 self.emit(TokenType.IDENT, ident)
                 continue
 
-            # DEFAULT: TEXT
             buf.append(ch)
             self.advance()
 
