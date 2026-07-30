@@ -4,25 +4,18 @@ from enum import Enum, auto
 class TokenType(Enum):
     TEXT = auto()
     IDENT = auto()
-
     COLON_OPEN = auto()
     COLON_CLOSE = auto()
-
     BRACE_OPEN = auto()
     BRACE_CLOSE = auto()
-
     DOLLAR_OPEN = auto()
     DOLLAR_CLOSE = auto()
-
     ANGLE_OPEN = auto()
     ANGLE_CLOSE = auto()
-
     PIPE_OPEN = auto()
     PIPE_CLOSE = auto()
-
     PERCENT_OPEN = auto()
     PERCENT_CLOSE = auto()
-
     LPAREN = auto()
     RPAREN = auto()
 
@@ -45,12 +38,9 @@ class Tokenizer:
         self.i = 0
         self.n = len(text)
         self.tokens = []
-
-        # state for single-char paired delimiters
         self.in_pipe = False
         self.in_percent = False
         self.in_colon = False
-        self.escaped = False
 
     def peek(self, k=0):
         idx = self.i + k
@@ -78,33 +68,26 @@ class Tokenizer:
         while self.i < self.n:
             ch = self.peek()
 
-            # ESCAPES
             if self.match(r'\:'):
-                buf.append(':'); self.advance(2); self.escaped = True; continue
+                buf.append(':'); self.advance(2); continue
             if self.match(r'\<'):
-                buf.append('<'); self.advance(2); self.escaped = True; continue
+                buf.append('<'); self.advance(2); continue
             if self.match(r'\>'):
-                buf.append('>'); self.advance(2); self.escaped = True; continue
+                buf.append('>'); self.advance(2); continue
             if self.match(r'\%'):
-                buf.append('%'); self.advance(2); self.escaped = True; continue
+                buf.append('%'); self.advance(2); continue
             if self.match(r'\$'):
-                buf.append('$'); self.advance(2); self.escaped = True; continue
+                buf.append('$'); self.advance(2); continue
             if self.match(r'\{'):
-                buf.append('{'); self.advance(2); self.escaped = True; continue
+                buf.append('{'); self.advance(2); continue
             if self.match(r'\}'):
-                buf.append('}'); self.advance(2); self.escaped = True; continue
+                buf.append('}'); self.advance(2); continue
             if self.match(r'\|'):
-                buf.append('|'); self.advance(2); self.escaped = True; continue
+                buf.append('|'); self.advance(2); continue
             if self.match(r'\('):
-                buf.append('('); self.advance(2); self.escaped = True; continue
+                buf.append('('); self.advance(2); continue
             if self.match(r'\)'):
-                buf.append(')'); self.advance(2); self.escaped = True; continue
-
-            if self.escaped:
-                buf.append(ch)
-                self.escaped = False
-                self.advance()
-                continue
+                buf.append(')'); self.advance(2); continue
 
             if self.match("{{"):
                 flush_text()
