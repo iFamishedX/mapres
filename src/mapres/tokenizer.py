@@ -46,6 +46,11 @@ class Tokenizer:
         self.n = len(text)
         self.tokens = []
 
+        # state for single-char paired delimiters
+        self.in_pipe = False
+        self.in_percent = False
+        self.in_colon = False
+
     def peek(self, k=0):
         idx = self.i + k
         if idx >= self.n:
@@ -72,9 +77,7 @@ class Tokenizer:
         while self.i < self.n:
             ch = self.peek()
 
-            # ------------------------------------
-            # ESCAPING: \X → literal X
-            # ------------------------------------
+            # ESCAPES
             if self.match(r'\:'):
                 buf.append(':'); self.advance(2); continue
             if self.match(r'\<'):
@@ -96,9 +99,7 @@ class Tokenizer:
             if self.match(r'\)'):
                 buf.append(')'); self.advance(2); continue
 
-            # ------------------------------------
             # DOUBLE BRACES {{value}}
-            # ------------------------------------
             if self.match("{{"):
                 flush_text()
                 self.emit(TokenType.BRACE_OPEN)
@@ -111,9 +112,7 @@ class Tokenizer:
                 self.advance(2)
                 continue
 
-            # ------------------------------------
             # DOLLARS ${value}
-            # ------------------------------------
             if self.match("${"):
                 flush_text()
                 self.emit(TokenType.DOLLAR_OPEN)
@@ -126,9 +125,7 @@ class Tokenizer:
                 self.advance()
                 continue
 
-            # ------------------------------------
             # ANGLES <value>
-            # ------------------------------------
             if self.match("<"):
                 flush_text()
                 self.emit(TokenType.ANGLE_OPEN)
@@ -141,48 +138,43 @@ class Tokenizer:
                 self.advance()
                 continue
 
-            # ------------------------------------
             # PIPES |value|
-            # ------------------------------------
             if self.match("|"):
                 flush_text()
-                # explicit open/close detection:
-                # |IDENT| → PIPE_OPEN IDENT PIPE_CLOSE
-                # parser enforces structure
-                if self.tokens and self.tokens[-1].type == TokenType.PIPE_OPEN:
-                    self.emit(TokenType.PIPE_CLOSE)
-                else:
+                if not self.in_pipe:
                     self.emit(TokenType.PIPE_OPEN)
+                    self.in_pipe = True
+                else:
+                    self.emit(TokenType.PIPE_CLOSE)
+                    self.in_pipe = False
                 self.advance()
                 continue
 
-            # ------------------------------------
             # PERCENTS %value%
-            # ------------------------------------
             if self.match("%"):
                 flush_text()
-                if self.tokens and self.tokens[-1].type == TokenType.PERCENT_OPEN:
-                    self.emit(TokenType.PERCENT_CLOSE)
-                else:
+                if not self.in_percent:
                     self.emit(TokenType.PERCENT_OPEN)
+                    self.in_percent = True
+                else:
+                    self.emit(TokenType.PERCENT_CLOSE)
+                    self.in_percent = False
                 self.advance()
                 continue
 
-            # ------------------------------------
             # COLONS :value:
-            # ------------------------------------
             if self.match(":"):
                 flush_text()
-                if self.tokens and self.tokens[-1].type == TokenType.COLON_OPEN:
-                    self.emit(TokenType.COLON_CLOSE)
-                else:
+                if not self.in_colon:
                     self.emit(TokenType.COLON_OPEN)
+                    self.in_colon = True
+                else:
+                    self.emit(TokenType.COLON_CLOSE)
+                    self.in_colon = False
                 self.advance()
                 continue
 
-            # ------------------------------------
             # PARENTHESES
-            # ------------------------------------
             if ch == "(":
                 flush_text()
                 self.emit(TokenType.LPAREN)
@@ -195,9 +187,7 @@ class Tokenizer:
                 self.advance()
                 continue
 
-            # ------------------------------------
             # IDENTIFIERS (with dots)
-            # ------------------------------------
             if ch.isalpha():
                 flush_text()
                 start = self.i
@@ -207,9 +197,7 @@ class Tokenizer:
                 self.emit(TokenType.IDENT, ident)
                 continue
 
-            # ------------------------------------
             # DEFAULT: TEXT
-            # ------------------------------------
             buf.append(ch)
             self.advance()
 
