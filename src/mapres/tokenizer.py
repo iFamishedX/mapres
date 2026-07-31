@@ -121,6 +121,23 @@ class Tokenizer:
                 self.advance()
                 continue
 
+            # --- $(IDENT) ---
+            if self.match('$('):
+                flush_text()
+                start = self.i
+                self.advance(2)
+                ident = self._read_ident()
+                if ident is not None and self.peek() == ')':
+                    self.emit(TokenType.DOLLAR_OPEN)
+                    self.emit(TokenType.IDENT, ident)
+                    self.advance()
+                    self.emit(TokenType.DOLLAR_CLOSE)
+                    continue
+                self.i = start
+                buf.append(self.peek())
+                self.advance()
+                continue
+
             # --- <IDENT> ---
             if ch == '<':
                 flush_text()

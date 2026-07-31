@@ -1,5 +1,5 @@
 run: true
-version: '3-dev.22'
+version: '3-dev.23'
 description: |
   Dev 1:
   - Full engine rewrite:
@@ -49,3 +49,5 @@ description: |
   - Remove recursion and some paramaters temporarily
   Dev 22:
   - Made parser and tokenizer much more strict
+  Dev 23:
+  - Readded $(IDENT) pattern
