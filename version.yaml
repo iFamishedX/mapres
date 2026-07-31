@@ -1,5 +1,5 @@
 run: true
-version: '3-dev.17'
+version: '3-dev.18'
 description: |
   Dev 1:
   - Full engine rewrite:
@@ -43,3 +43,5 @@ description: |
     - Updated evaulator logic to apply
   Dev 17:
   - Fixed critical logic bug
+  Dev 18:
+  - Debugging
