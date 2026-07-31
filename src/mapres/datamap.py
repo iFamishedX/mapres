@@ -101,7 +101,8 @@ def datamap(_cls=None, *, syntax=None, mode=None, recursive=None,
     def wrap(cls):
         cls.__syntax__ = syntax
         cls.__mode__ = mode
-        cls.__recursive__ = recursive
+        cls.__recursive__ = recursive if recursive is not None else False
+        # cls.__recursive__ = recursive
         cls.__missing_key__ = missing_key or 'error'
         cls.__ignore_delimiters__ = ignore_delimiters or False
 

@@ -14,45 +14,54 @@ class Evaluator:
         self.ctx = ctx or {}
         self._seen = set()  # cycle detection
 
+    # public api
     def evaluate(self, node):
         return self._eval(node)
 
+    # internal dispatch
     def _eval(self, node):
         if isinstance(node, TemplateNode):
             return self._eval_template(node)
+
         if isinstance(node, TextNode):
             return node.text
+
         if isinstance(node, IdentNode):
             return self._eval_ident(node)
+
         if isinstance(node, CallNode):
             return self._eval_call(node)
+
         raise EvaluationError(f'Unknown AST node: {node}')
 
+    # template
     def _eval_template(self, node: TemplateNode):
         parts = []
         for child in node.children:
             parts.append(self._eval(child))
         out = ''.join(parts)
 
-        # recursion disabled for now
+        # recursion disabled for now (Mapres 2–style behavior)
         return out
 
+    # identifier
     def _eval_ident(self, node: IdentNode):
         name = node.name
 
+        # cycle detection
         if name in self._seen:
             raise EvaluationError(f"Cycle detected in identifier '{name}'")
         self._seen.add(name)
 
         parts = name.split('.')
 
-        # ctx first
+        # 1. ctx first
         val = self._lookup_hierarchical(self.ctx, parts)
         if val is not None:
             self._seen.remove(name)
             return str(val)
 
-        # syntax-bound maps
+        # 2. syntax-bound maps
         for m in self.layerstack.all_maps():
             if getattr(m, '__syntax__', None) not in (None, node.syntax):
                 continue
@@ -66,6 +75,7 @@ class Evaluator:
         self._seen.remove(name)
         raise MissingKeyError(name)
 
+    # call (nested token)
     def _eval_call(self, node: CallNode):
         outer = node.name
 
@@ -96,6 +106,7 @@ class Evaluator:
         self._seen.remove(outer)
         raise MissingKeyError(f'{outer}({arg_value})')
 
+    # helpers
     def _map_to_dict(self, m):
         if hasattr(m, 'as_map'):
             return m.as_map()
@@ -113,7 +124,7 @@ class Evaluator:
             cur = cur[p]
         return cur
 
-    # recursion helpers now unused
+    # recursion helpers now effectively disabled
     def _has_recursive_maps(self):
         return False
 
