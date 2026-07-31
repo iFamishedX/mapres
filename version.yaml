@@ -1,5 +1,5 @@
 run: true
-version: '3-dev.20'
+version: '3-dev.21'
 description: |
   Dev 1:
   - Full engine rewrite:
@@ -45,3 +45,5 @@ description: |
   - Fixed critical logic bug
   Dev 18-20:
   - Debugging
+  Dev 21:
+  - Remove recursion and some paramaters temporarily

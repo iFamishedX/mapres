@@ -1,4 +1,3 @@
-import re
 from dataclasses import dataclass, fields, is_dataclass
 
 # syntax identifiers
@@ -30,15 +29,13 @@ class DataMap:
 
     Mode metadata (__mode__) controls behavior:
         - None: plain static map
-        - "dynamic": values may be provided by callables/providers
-        - "config": config-style maps (no dynamic evaluation)
-        - "callable": map exposes callable methods for nested calls
+        - 'dynamic': values may be provided by callables/providers
+        - 'config': config-style maps (no dynamic evaluation)
+        - 'callable': map exposes callable methods for nested calls
     '''
     __syntax__: str = None
-    __mode__: str | None = None # "dynamic", "config", "callable", or None
-    __recursive__: bool = False
+    __mode__: str | None = None  # 'dynamic', 'config', 'callable', or None
     __missing_key__: str = 'error'  # 'error', 'silent', 'placeholder'
-    __ignore_delimiters__: bool = False
 
     def as_map(self):
         '''
@@ -95,14 +92,11 @@ class DataMap:
         return out
 
 
-def datamap(_cls=None, *, syntax=None, mode=None, recursive=None, missing_key=None, ignore_delimiters=None):
-
+def datamap(_cls=None, *, syntax=None, mode=None, missing_key=None):
     def wrap(cls):
         cls.__syntax__ = syntax
         cls.__mode__ = mode
-        cls.__recursive__ = recursive
         cls.__missing_key__ = missing_key or 'error'
-        cls.__ignore_delimiters__ = ignore_delimiters or False
 
         namespace = dict(cls.__dict__)
         namespace['__dict__'] = {}
