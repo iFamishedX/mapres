@@ -22,11 +22,10 @@ class Parser:
     def expect(self, type_: TokenType) -> Token:
         tok = self.peek()
         if tok is None or tok.type != type_:
-            raise ParserError(f"Expected {type_}, got {tok}")
+            raise ParserError(f'Expected {type_}, got {tok}')
         self.advance()
         return tok
 
-    # top-level template parse
     def parse(self) -> TemplateNode:
         children: list[Node] = []
         while self.peek() is not None:
@@ -38,88 +37,76 @@ class Parser:
                 children.append(self.parse_token())
         return TemplateNode(children)
 
-    # nested template parse (for IDENT(...))
     def parse_until(self, stop_types: tuple[TokenType, ...]) -> TemplateNode:
         children: list[Node] = []
         while True:
             tok = self.peek()
             if tok is None or tok.type in stop_types:
                 break
-
             if tok.type is TokenType.TEXT:
                 children.append(TextNode(tok.value))
                 self.advance()
             else:
                 children.append(self.parse_token())
-
         return TemplateNode(children)
 
-    # dispatch by opening delimiter
     def parse_token(self) -> Node:
         tok = self.peek()
 
         if tok.type is TokenType.COLON_OPEN:
-            return self.parse_colon_token()
+            return self.parse_colon()
 
         if tok.type is TokenType.BRACE_OPEN:
-            return self.parse_brace_token()
+            return self.parse_brace()
 
         if tok.type is TokenType.DOLLAR_OPEN:
-            return self.parse_dollar_token()
+            return self.parse_dollar()
 
         if tok.type is TokenType.ANGLE_OPEN:
-            return self.parse_angle_token()
+            return self.parse_angle()
 
         if tok.type is TokenType.PIPE_OPEN:
-            return self.parse_pipe_token()
+            return self.parse_pipe()
 
         if tok.type is TokenType.PERCENT_OPEN:
-            return self.parse_percent_token()
+            return self.parse_percent()
 
-        raise ParserError(f"Unexpected token {tok}")
+        raise ParserError(f'Unexpected token {tok}')
 
-    # core pattern: IDENT or IDENT(arg)
     def _parse_ident_or_call(self, closing_type: TokenType, syntax_name: str) -> Node:
         ident_tok = self.expect(TokenType.IDENT)
         name = ident_tok.value
 
-        # IDENT(arg)
         if self.peek() and self.peek().type is TokenType.LPAREN:
-            self.advance()  # consume '('
-
-            # parse only until RPAREN
+            self.advance()
             arg = self.parse_until((TokenType.RPAREN,))
-
             self.expect(TokenType.RPAREN)
             self.expect(closing_type)
             return CallNode(name=name, arg=arg, syntax=syntax_name)
 
-        # IDENT
         self.expect(closing_type)
         return IdentNode(name=name, syntax=syntax_name)
 
-    # --- syntax-bound token handlers ---
-
-    def parse_colon_token(self) -> Node:
+    def parse_colon(self) -> Node:
         self.expect(TokenType.COLON_OPEN)
-        return self._parse_ident_or_call(TokenType.COLON_CLOSE, "colons")
+        return self._parse_ident_or_call(TokenType.COLON_CLOSE, 'colons')
 
-    def parse_brace_token(self) -> Node:
+    def parse_brace(self) -> Node:
         self.expect(TokenType.BRACE_OPEN)
-        return self._parse_ident_or_call(TokenType.BRACE_CLOSE, "braces")
+        return self._parse_ident_or_call(TokenType.BRACE_CLOSE, 'braces')
 
-    def parse_dollar_token(self) -> Node:
+    def parse_dollar(self) -> Node:
         self.expect(TokenType.DOLLAR_OPEN)
-        return self._parse_ident_or_call(TokenType.DOLLAR_CLOSE, "dollars")
+        return self._parse_ident_or_call(TokenType.DOLLAR_CLOSE, 'dollars')
 
-    def parse_angle_token(self) -> Node:
+    def parse_angle(self) -> Node:
         self.expect(TokenType.ANGLE_OPEN)
-        return self._parse_ident_or_call(TokenType.ANGLE_CLOSE, "angles")
+        return self._parse_ident_or_call(TokenType.ANGLE_CLOSE, 'angles')
 
-    def parse_pipe_token(self) -> Node:
+    def parse_pipe(self) -> Node:
         self.expect(TokenType.PIPE_OPEN)
-        return self._parse_ident_or_call(TokenType.PIPE_CLOSE, "pipes")
+        return self._parse_ident_or_call(TokenType.PIPE_CLOSE, 'pipes')
 
-    def parse_percent_token(self) -> Node:
+    def parse_percent(self) -> Node:
         self.expect(TokenType.PERCENT_OPEN)
-        return self._parse_ident_or_call(TokenType.PERCENT_CLOSE, "percents")
+        return self._parse_ident_or_call(TokenType.PERCENT_CLOSE, 'percents')

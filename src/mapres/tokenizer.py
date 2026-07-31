@@ -33,37 +33,29 @@ class Token:
 
 
 class Tokenizer:
-    def __init__(self, text):
+    def __init__(self, text: str):
         self.text = text
         self.i = 0
         self.n = len(text)
-        self.tokens = []
+        self.tokens: list[Token] = []
 
-        # toggle states
-        self.in_pipe = False
-        self.in_percent = False
-        self.in_colon = False
-
-        # mixed states
-        self.in_dollar = False
-
-    def peek(self, k=0):
+    def peek(self, k: int = 0) -> str:
         idx = self.i + k
         if idx >= self.n:
             return ''
         return self.text[idx]
 
-    def advance(self, k=1):
+    def advance(self, k: int = 1) -> None:
         self.i += k
 
-    def match(self, s):
+    def match(self, s: str) -> bool:
         return self.text.startswith(s, self.i)
 
-    def emit(self, type_, value=None):
+    def emit(self, type_, value=None) -> None:
         self.tokens.append(Token(type_, value, self.i))
 
-    def tokenize(self):
-        buf = []
+    def tokenize(self) -> list[Token]:
+        buf: list[str] = []
 
         def flush_text():
             if buf:
@@ -95,93 +87,109 @@ class Tokenizer:
             if self.match(r'\)'):
                 buf.append(')'); self.advance(2); continue
 
-            # --- paired delimiters ---
-
-            # braces {{ }}
+            # --- {{IDENT}} ---
             if self.match('{{'):
                 flush_text()
-                self.emit(TokenType.BRACE_OPEN)
+                start = self.i
                 self.advance(2)
-                continue
-
-            if self.match('}}'):
-                flush_text()
-                self.emit(TokenType.BRACE_CLOSE)
-                self.advance(2)
-                continue
-
-            # angles < >
-            if self.match('<'):
-                flush_text()
-                self.emit(TokenType.ANGLE_OPEN)
+                ident = self._read_ident()
+                if ident is not None and self.match('}}'):
+                    self.emit(TokenType.BRACE_OPEN)
+                    self.emit(TokenType.IDENT, ident)
+                    self.advance(2)
+                    self.emit(TokenType.BRACE_CLOSE)
+                    continue
+                self.i = start
+                buf.append(self.peek())
                 self.advance()
                 continue
 
-            if self.match('>'):
-                flush_text()
-                self.emit(TokenType.ANGLE_CLOSE)
-                self.advance()
-                continue
-
-            # --- mixed delimiters (dollars) ---
-
+            # --- ${IDENT} ---
             if self.match('${'):
                 flush_text()
-                self.emit(TokenType.DOLLAR_OPEN)
-                self.in_dollar = True
+                start = self.i
                 self.advance(2)
-                continue
-
-            if ch == '}':
-                flush_text()
-                if self.in_dollar:
+                ident = self._read_ident()
+                if ident is not None and self.peek() == '}':
+                    self.emit(TokenType.DOLLAR_OPEN)
+                    self.emit(TokenType.IDENT, ident)
+                    self.advance()
                     self.emit(TokenType.DOLLAR_CLOSE)
-                    self.in_dollar = False
-                else:
-                    buf.append('}')
+                    continue
+                self.i = start
+                buf.append(self.peek())
                 self.advance()
                 continue
 
-            # --- toggle delimiters ---
-
-            # pipes |...|
-            if self.match('|'):
+            # --- <IDENT> ---
+            if ch == '<':
                 flush_text()
-                if not self.in_pipe:
+                start = self.i
+                self.advance()
+                ident = self._read_ident()
+                if ident is not None and self.peek() == '>':
+                    self.emit(TokenType.ANGLE_OPEN)
+                    self.emit(TokenType.IDENT, ident)
+                    self.advance()
+                    self.emit(TokenType.ANGLE_CLOSE)
+                    continue
+                self.i = start
+                buf.append(self.peek())
+                self.advance()
+                continue
+
+            # --- |IDENT| ---
+            if ch == '|':
+                flush_text()
+                start = self.i
+                self.advance()
+                ident = self._read_ident()
+                if ident is not None and self.peek() == '|':
                     self.emit(TokenType.PIPE_OPEN)
-                    self.in_pipe = True
-                else:
+                    self.emit(TokenType.IDENT, ident)
+                    self.advance()
                     self.emit(TokenType.PIPE_CLOSE)
-                    self.in_pipe = False
+                    continue
+                self.i = start
+                buf.append(self.peek())
                 self.advance()
                 continue
 
-            # percents %...%
-            if self.match('%'):
+            # --- %IDENT% ---
+            if ch == '%':
                 flush_text()
-                if not self.in_percent:
+                start = self.i
+                self.advance()
+                ident = self._read_ident()
+                if ident is not None and self.peek() == '%':
                     self.emit(TokenType.PERCENT_OPEN)
-                    self.in_percent = True
-                else:
+                    self.emit(TokenType.IDENT, ident)
+                    self.advance()
                     self.emit(TokenType.PERCENT_CLOSE)
-                    self.in_percent = False
+                    continue
+                self.i = start
+                buf.append(self.peek())
                 self.advance()
                 continue
 
-            # colons :...:
-            if self.match(':'):
+            # --- :IDENT: ---
+            if ch == ':':
                 flush_text()
-                if not self.in_colon:
+                start = self.i
+                self.advance()
+                ident = self._read_ident()
+                if ident is not None and self.peek() == ':':
                     self.emit(TokenType.COLON_OPEN)
-                    self.in_colon = True
-                else:
+                    self.emit(TokenType.IDENT, ident)
+                    self.advance()
                     self.emit(TokenType.COLON_CLOSE)
-                    self.in_colon = False
+                    continue
+                self.i = start
+                buf.append(self.peek())
                 self.advance()
                 continue
 
             # --- parens ---
-
             if ch == '(':
                 flush_text()
                 self.emit(TokenType.LPAREN)
@@ -194,39 +202,30 @@ class Tokenizer:
                 self.advance()
                 continue
 
-            # --- IDENT (your rules) ---
-
-            if ch.isalnum():
-                flush_text()
-                start = self.i
-
-                # first char: [a-zA-Z0-9]
-                self.advance()
-
-                # middle chars: [a-zA-Z0-9._]*
-                while True:
-                    nxt = self.peek()
-                    if not nxt:
-                        break
-                    if nxt.isalnum() or nxt in '._':
-                        self.advance()
-                    else:
-                        break
-
-                ident = self.text[start:self.i]
-
-                # enforce: no leading/trailing '_', no '-'
-                if ident.startswith('_') or ident.endswith('_') or '-' in ident:
-                    # treat as TEXT instead
-                    buf.append(ident)
-                else:
-                    self.emit(TokenType.IDENT, ident)
-                continue
-
-            # --- fallback: TEXT ---
-
+            # fallback TEXT
             buf.append(ch)
             self.advance()
 
         flush_text()
         return self.tokens
+
+    def _read_ident(self) -> str | None:
+        start = self.i
+        ch = self.peek()
+        if not ch or not ch.isalnum():
+            return None
+
+        self.advance()
+        while True:
+            nxt = self.peek()
+            if not nxt:
+                break
+            if nxt.isalnum() or nxt in '._':
+                self.advance()
+            else:
+                break
+
+        ident = self.text[start:self.i]
+        if ident.startswith('_') or ident.endswith('_') or '-' in ident:
+            return None
+        return ident

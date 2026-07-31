@@ -1,5 +1,5 @@
 run: true
-version: '3-dev.21'
+version: '3-dev.22'
 description: |
   Dev 1:
   - Full engine rewrite:
@@ -47,3 +47,5 @@ description: |
   - Debugging
   Dev 21:
   - Remove recursion and some paramaters temporarily
+  Dev 22:
+  - Made parser and tokenizer much more strict
