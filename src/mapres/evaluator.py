@@ -33,6 +33,13 @@ class Evaluator:
             return self._eval_call(node)
 
         raise EvaluationError(f'Unknown AST node: {node}')
+    
+    # re-resolve
+    def _re_resolve(self, text: str) -> str:
+        tokens = Tokenizer(text).tokenize()
+        ast = Parser(tokens).parse()
+        return self.evaluate(ast)
+
 
     # template
     def _eval_template(self, node: TemplateNode):
@@ -40,6 +47,42 @@ class Evaluator:
         for child in node.children:
             parts.append(self._eval(child))
         out = ''.join(parts)
+
+        # ---------------------------------------
+        # PER-MAP RECURSION (syntax-scoped)
+        # ---------------------------------------
+        # Find all maps in the layerstack that have recursive=True
+        recursive_maps = [
+            m for m in self.layerstack.all_maps()
+            if getattr(m, '__recursive__', False) is True
+        ]
+
+        # If no maps are recursive, return the first-pass output
+        if not recursive_maps:
+            return out
+
+        # Determine max recursion depth across all recursive maps
+        max_depth = max(getattr(m, '__max_depth__', 10) for m in recursive_maps)
+
+        seen = set()
+        depth = 0
+
+        while depth < max_depth:
+            # Re-tokenize and re-evaluate the ENTIRE output string
+            new_out = self._re_resolve(out)
+
+            # If stable, stop recursion
+            if new_out == out:
+                break
+
+            # Cycle detection
+            if new_out in seen:
+                raise EvaluationError('Cycle detected in recursive map resolution')
+
+            seen.add(new_out)
+            out = new_out
+            depth += 1
+
         return out
 
     # identifier

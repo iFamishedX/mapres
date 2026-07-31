@@ -36,6 +36,8 @@ class DataMap:
     __syntax__: str = None
     __mode__: str | None = None  # 'dynamic', 'config', 'callable', or None
     __missing_key__: str = 'error'  # 'error', 'silent', 'placeholder'
+    __recursive__: bool = False
+    __max_depth__: int = 10
 
     def as_map(self):
         '''
@@ -92,11 +94,13 @@ class DataMap:
         return out
 
 
-def datamap(_cls=None, *, syntax=None, mode=None, missing_key=None):
+def datamap(_cls=None, *, syntax=None, mode=None, missing_key=None, recursive=None, max_depth=None):
     def wrap(cls):
         cls.__syntax__ = syntax
         cls.__mode__ = mode
         cls.__missing_key__ = missing_key or 'error'
+        cls.__recursive__ = recursive or False
+        cls.__max_depth__ = max_depth or 10
 
         namespace = dict(cls.__dict__)
         namespace['__dict__'] = {}

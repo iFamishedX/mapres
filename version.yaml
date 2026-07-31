@@ -1,5 +1,5 @@
 run: true
-version: '3-dev.23'
+version: '3-dev.24'
 description: |
   Dev 1:
   - Full engine rewrite:
@@ -51,3 +51,7 @@ description: |
   - Made parser and tokenizer much more strict
   Dev 23:
   - Readded $(IDENT) pattern
+  Dev 24:
+  - Readded recursion
+  - Added max_depth to datamap decorator
+  - Fixed cycle detection
