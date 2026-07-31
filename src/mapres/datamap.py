@@ -121,14 +121,6 @@ def datamap(_cls=None, *, syntax=None, mode=None, missing_key=None, recursive=No
 
 # syntax-bound decorator factories
 class _SyntaxFactory:
-    '''
-    Allows:
-        @datamap.angles
-        @datamap.angles(mode='config')
-        @datamap.angles.config
-        @datamap.angles.dynamic
-        @datamap.angles.callable
-    '''
     def __init__(self, syntax_name):
         self._syntax = syntax_name
 
@@ -137,17 +129,20 @@ class _SyntaxFactory:
             return datamap(_cls, syntax=self._syntax)
         return datamap(syntax=self._syntax, **kwargs)
 
-    @property
-    def config(self):
-        return datamap(syntax=self._syntax, mode='config')
+    def config(self, _cls=None, **kwargs):
+        if _cls is not None and isinstance(_cls, type):
+            return datamap(_cls, syntax=self._syntax, mode='config')
+        return datamap(syntax=self._syntax, mode='config', **kwargs)
 
-    @property
-    def dynamic(self):
-        return datamap(syntax=self._syntax, mode='dynamic')
+    def dynamic(self, _cls=None, **kwargs):
+        if _cls is not None and isinstance(_cls, type):
+            return datamap(_cls, syntax=self._syntax, mode='dynamic')
+        return datamap(syntax=self._syntax, mode='dynamic', **kwargs)
 
-    @property
-    def callable(self):
-        return datamap(syntax=self._syntax, mode='callable')
+    def callable(self, _cls=None, **kwargs):
+        if _cls is not None and isinstance(_cls, type):
+            return datamap(_cls, syntax=self._syntax, mode='callable')
+        return datamap(syntax=self._syntax, mode='callable', **kwargs)
 
 
 datamap.braces        = _SyntaxFactory(syntax.braces)

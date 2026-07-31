@@ -1,5 +1,5 @@
 run: true
-version: '3-dev.24'
+version: '3-dev.25'
 description: |
   Dev 1:
   - Full engine rewrite:
@@ -55,3 +55,5 @@ description: |
   - Readded recursion
   - Added max_depth to datamap decorator
   - Fixed cycle detection
+  Dev 25:
+  - Fixed datamap's SyntaxFactory
