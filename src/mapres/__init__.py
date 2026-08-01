@@ -10,6 +10,7 @@ except PackageNotFoundError:
 from .resolver import MapResolver, res, setGlobalMaps
 from .datamap import DataMap, datamap, syntax
 from .layers import Layer, LayerStack
+from .utils import rprint
 
 # maps
 from .maps.color import ColorMap, ascii_colors, mc_colors, strip_colors
@@ -28,6 +29,10 @@ maps = SimpleNamespace(
     time = time,
 )
 
+utils = SimpleNamespace(
+    rprint = rprint,
+)
+
 __all__ = [
     # core modules
     'MapResolver',
@@ -39,6 +44,9 @@ __all__ = [
     'LayerStack',
     'setGlobalMaps',
 
+    # utils
+    'rprint',
+
     # maps
     'ColorMap',
     'ascii_colors',
@@ -49,4 +57,5 @@ __all__ = [
 
     # namespaces
     'maps',
+    'utils',
 ]

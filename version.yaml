@@ -1,5 +1,5 @@
 run: true
-version: '3-dev.25'
+version: '3-dev.26'
 description: |
   Dev 1:
   - Full engine rewrite:
@@ -57,3 +57,6 @@ description: |
   - Fixed cycle detection
   Dev 25:
   - Fixed datamap's SyntaxFactory
+  Dev 26:
+  - Created utils.py
+  - Added rprint() for simple global resolution and print
