@@ -16,9 +16,8 @@ class TokenType(Enum):
     PIPE_CLOSE = auto()
     PERCENT_OPEN = auto()
     PERCENT_CLOSE = auto()
-    # # LPAREN and RPAREN tokens were deprecated in mapres 3-dev.27 to fix a bug in the parser that caused it to fail on nested calls
-    # LPAREN = auto()
-    # RPAREN = auto()
+    LPAREN = auto()
+    RPAREN = auto()
 
 
 class Token:
@@ -94,6 +93,18 @@ class Tokenizer:
                 start = self.i
                 self.advance(2)
                 ident = self._read_ident()
+                # ident == None means _read_ident already emitted IDENT and nested tokens
+                if ident is None:
+                    # nested call already emitted; expect closing '}}'
+                    if self.match('}}'):
+                        self.advance(2)
+                        self.emit(TokenType.BRACE_CLOSE)
+                        continue
+                    # fallback to literal
+                    self.i = start
+                    buf.append(self.peek())
+                    self.advance()
+                    continue
                 if ident is not None and self.match('}}'):
                     self.emit(TokenType.BRACE_OPEN)
                     self.emit(TokenType.IDENT, ident)
@@ -111,6 +122,16 @@ class Tokenizer:
                 start = self.i
                 self.advance(2)
                 ident = self._read_ident()
+                if ident is None:
+                    # nested call already emitted; expect closing '}'
+                    if self.peek() == '}':
+                        self.advance()
+                        self.emit(TokenType.DOLLAR_CLOSE)
+                        continue
+                    self.i = start
+                    buf.append(self.peek())
+                    self.advance()
+                    continue
                 if ident is not None and self.peek() == '}':
                     self.emit(TokenType.DOLLAR_OPEN)
                     self.emit(TokenType.IDENT, ident)
@@ -145,6 +166,16 @@ class Tokenizer:
                 start = self.i
                 self.advance()
                 ident = self._read_ident()
+                if ident is None:
+                    # nested call already emitted; expect closing '>'
+                    if self.peek() == '>':
+                        self.advance()
+                        self.emit(TokenType.ANGLE_CLOSE)
+                        continue
+                    self.i = start
+                    buf.append(self.peek())
+                    self.advance()
+                    continue
                 if ident is not None and self.peek() == '>':
                     self.emit(TokenType.ANGLE_OPEN)
                     self.emit(TokenType.IDENT, ident)
@@ -162,6 +193,16 @@ class Tokenizer:
                 start = self.i
                 self.advance()
                 ident = self._read_ident()
+                if ident is None:
+                    # nested call already emitted; expect closing '|'
+                    if self.peek() == '|':
+                        self.advance()
+                        self.emit(TokenType.PIPE_CLOSE)
+                        continue
+                    self.i = start
+                    buf.append(self.peek())
+                    self.advance()
+                    continue
                 if ident is not None and self.peek() == '|':
                     self.emit(TokenType.PIPE_OPEN)
                     self.emit(TokenType.IDENT, ident)
@@ -179,6 +220,16 @@ class Tokenizer:
                 start = self.i
                 self.advance()
                 ident = self._read_ident()
+                if ident is None:
+                    # nested call already emitted; expect closing '%'
+                    if self.peek() == '%':
+                        self.advance()
+                        self.emit(TokenType.PERCENT_CLOSE)
+                        continue
+                    self.i = start
+                    buf.append(self.peek())
+                    self.advance()
+                    continue
                 if ident is not None and self.peek() == '%':
                     self.emit(TokenType.PERCENT_OPEN)
                     self.emit(TokenType.IDENT, ident)
@@ -196,6 +247,16 @@ class Tokenizer:
                 start = self.i
                 self.advance()
                 ident = self._read_ident()
+                if ident is None:
+                    # nested call already emitted; expect closing ':'
+                    if self.peek() == ':':
+                        self.advance()
+                        self.emit(TokenType.COLON_CLOSE)
+                        continue
+                    self.i = start
+                    buf.append(self.peek())
+                    self.advance()
+                    continue
                 if ident is not None and self.peek() == ':':
                     self.emit(TokenType.COLON_OPEN)
                     self.emit(TokenType.IDENT, ident)
@@ -206,19 +267,6 @@ class Tokenizer:
                 buf.append(self.peek())
                 self.advance()
                 continue
-
-            # # --- parens --- (This block was deprecated in mapres 3-dev.27)
-            # if ch == '(':
-            #     flush_text()
-            #     self.emit(TokenType.LPAREN)
-            #     self.advance()
-            #     continue
-
-            # if ch == ')':
-            #     flush_text()
-            #     self.emit(TokenType.RPAREN)
-            #     self.advance()
-            #     continue
 
             # fallback TEXT
             buf.append(ch)
@@ -246,4 +294,32 @@ class Tokenizer:
         ident = self.text[start:self.i]
         if ident.startswith('_') or ident.endswith('_') or '-' in ident:
             return None
+
+        # unified nested-call support: if '(' immediately follows the ident,
+        # emit IDENT + LPAREN + nested TEXT + RPAREN and return None.
+        if self.peek() == '(':
+            # emit IDENT token
+            self.emit(TokenType.IDENT, ident)
+
+            # consume '(' and emit LPAREN
+            self.advance()
+            self.emit(TokenType.LPAREN)
+
+            # capture nested content as TEXT until the next ')'
+            nested_start = self.i
+            while self.peek() not in (')', ''):
+                self.advance()
+            nested_text = self.text[nested_start:self.i]
+            if nested_text:
+                self.emit(TokenType.TEXT, nested_text)
+
+            # consume ')' and emit RPAREN if present
+            if self.peek() == ')':
+                self.advance()
+                self.emit(TokenType.RPAREN)
+
+            # signal to caller that tokens were emitted already
+            return None
+
+        # no nested call; return the identifier string
         return ident
