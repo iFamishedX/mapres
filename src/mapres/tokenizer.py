@@ -16,8 +16,9 @@ class TokenType(Enum):
     PIPE_CLOSE = auto()
     PERCENT_OPEN = auto()
     PERCENT_CLOSE = auto()
-    LPAREN = auto()
-    RPAREN = auto()
+    # # LPAREN and RPAREN tokens were deprecated in mapres 3-dev.27 to fix a bug in the parser that caused it to fail on nested calls
+    # LPAREN = auto()
+    # RPAREN = auto()
 
 
 class Token:
@@ -206,18 +207,18 @@ class Tokenizer:
                 self.advance()
                 continue
 
-            # --- parens ---
-            if ch == '(':
-                flush_text()
-                self.emit(TokenType.LPAREN)
-                self.advance()
-                continue
+            # # --- parens --- (This block was deprecated in mapres 3-dev.27)
+            # if ch == '(':
+            #     flush_text()
+            #     self.emit(TokenType.LPAREN)
+            #     self.advance()
+            #     continue
 
-            if ch == ')':
-                flush_text()
-                self.emit(TokenType.RPAREN)
-                self.advance()
-                continue
+            # if ch == ')':
+            #     flush_text()
+            #     self.emit(TokenType.RPAREN)
+            #     self.advance()
+            #     continue
 
             # fallback TEXT
             buf.append(ch)

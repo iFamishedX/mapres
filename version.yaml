@@ -1,5 +1,5 @@
 run: true
-version: '3-dev.26'
+version: '3-dev.27'
 description: |
   Dev 1:
   - Full engine rewrite:
@@ -60,3 +60,5 @@ description: |
   Dev 26:
   - Created utils.py
   - Added rprint() for simple global resolution and print
+  Dev 27:
+  - Removed LPAREN and RPAREN tokens from the tokenizer, fixing a bug in the parser that caused it to fail on nested calls
